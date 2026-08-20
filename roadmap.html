@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Roadmap — what's built, what's next, what's honestly deferred · sg-sentinel.sgit.ai</title>
-<meta name="description" content="SG/Sentinel's status, precisely: what the MVP proves (two use cases, three targets, 149 tests), the one leg not yet run live, and the designed-but-deferred list — fingerprint/fast-track, anomaly scoring, Layer 3, the unified graph, multi-CDN.">
+<title>Roadmap — a design's status: prototype, open items, deferred list · sg-sentinel.sgit.ai</title>
+<meta name="description" content="SG/Sentinel has not been built. This page gives the precise status of the May 2026 design and prototype exercise: what the prototype produced, what a builder would do first, and the designed-but-deferred list.">
 <link rel="canonical" href="https://sg-sentinel.sgit.ai/roadmap.html">
 <link rel="stylesheet" href="assets/site.css">
 </head>
@@ -12,8 +12,8 @@
 
 <nav class="site"><div class="row">
   <a class="brand" href="index.html">sg-sentinel<span>.sgit.ai</span></a>
-  <span class="stage-pill">mvp</span>
-  <a class="ver" href="admin/versions.html" title="Site release history">v0.1.0</a>
+  <span class="stage-pill">not built</span>
+  <a class="ver" href="admin/versions.html" title="Site release history">v0.1.1</a>
   <a class="nl" href="architecture.html">Architecture</a>
   <a class="nl" href="rules.html">Rules</a>
   <a class="nl" href="research.html">Research</a>
@@ -25,12 +25,14 @@
   <a class="gh" href="https://github.com/SGit-AI/SGit-AI__Website__SG_Sentinel">★ GitHub</a>
 </div></nav>
 
+<div class="notice-bar"><div class="in"><b>⚠ Not built.</b> SG/Sentinel is a published design from May 2026 — <em>“this is how I would build it”</em> — not a product. No plans to build it unless somebody funds it. <a href="index.html#not-built">Read the note →</a></div></div>
+
 <main class="doc">
 <div class="crumb"><a href="index.html">sg-sentinel.sgit.ai</a> / roadmap</div>
-<h1>What's built, what's next — honestly</h1>
-<p class="lead">SG/Sentinel is an MVP with a deliberate tiny core and an explicit deferred list. It does not claim to replace a commercial WAF today. This page is the precise status: what is proven, what is code-complete but unproven live, and what is designed but not built.</p>
+<h1>What the design covers, what it defers — honestly</h1>
+<p class="lead">First, the frame: SG/Sentinel <a href="index.html#not-built">has not been built</a> — there is a May 2026 design and a prototype exercise, and no plans to take it further unless somebody funds it. Within that frame, this page is the precise status of the prototype the design exercise produced: a deliberate tiny core with an explicit deferred list. It never claimed to replace a commercial WAF.</p>
 
-<h2 id="built">Built and proven</h2>
+<h2 id="built">What the May 2026 prototype exercise produced</h2>
 <div class="tablewrap"><table>
   <thead><tr><th>Piece</th><th>Status</th><th>Evidence</th></tr></thead>
   <tbody>
@@ -48,7 +50,8 @@
   </tbody>
 </table></div>
 
-<h2 id="open">The open items in front of everything else</h2>
+<h2 id="open">What a builder would do first</h2>
+<p>If somebody picks this up — the hope this site is published in — these are the open items the briefs put in front of everything else:</p>
 <ul>
   <li><b>Run the live AWS leg.</b> Deploy the ephemeral distribution, run the parity matrix's AWS leg and the live smoke test (deploy → curl each canonical path → assert 403/404/200 and a log object per request → teardown, no orphans). Until then the honest status stays "code-complete, not proven live". Tracked as <a href="admin/comms.html">comms T2</a>.</li>
   <li><b>Measure the cost.</b> The founding argument — writing directly to S3 avoids per-request WAF and Firehose pricing — is qualitative until the live path is measured against the Firehose + WAF baseline. The briefs flag this as acceptance criterion 12; no numbers are claimed anywhere on this site until it is done.</li>
@@ -91,7 +94,7 @@
   <div>
     <div class="brandline">sg-sentinel<span>.sgit.ai</span></div>
     <p>SG/Sentinel — an app-coupled edge security and logging layer: L1 decides and signals, L2 acts and writes, L3 (deferred) thinks. All content CC BY 4.0 unless noted.</p>
-    <p class="verline">site <a href="admin/versions.html">v0.1.0</a> · <a href="admin/index.html">engineering</a></p>
+    <p class="verline">site <a href="admin/versions.html">v0.1.1</a> · <a href="admin/index.html">engineering</a></p>
   </div>
   <div>
     <h4>The system</h4>

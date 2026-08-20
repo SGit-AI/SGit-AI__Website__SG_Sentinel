@@ -12,8 +12,8 @@
 
 <nav class="site"><div class="row">
   <a class="brand" href="../index.html">sg-sentinel<span>.sgit.ai</span></a>
-  <span class="stage-pill">mvp</span>
-  <a class="ver" href="versions.html" title="Site release history">v0.1.0</a>
+  <span class="stage-pill">not built</span>
+  <a class="ver" href="versions.html" title="Site release history">v0.1.1</a>
   <a class="nl" href="../architecture.html">Architecture</a>
   <a class="nl" href="../rules.html">Rules</a>
   <a class="nl" href="../research.html">Research</a>
@@ -24,6 +24,8 @@
   <a class="nl here" href="comms.html">Comms</a>
   <a class="gh" href="https://github.com/SGit-AI/SGit-AI__Website__SG_Sentinel">★ GitHub</a>
 </div></nav>
+
+<div class="notice-bar"><div class="in"><b>⚠ Not built.</b> SG/Sentinel is a published design from May 2026 — <em>“this is how I would build it”</em> — not a product. No plans to build it unless somebody funds it. <a href="../index.html#not-built">Read the note →</a></div></div>
 
 <main class="doc">
 <div class="crumb"><a href="../index.html">sg-sentinel.sgit.ai</a> / admin / comms</div>
@@ -45,7 +47,7 @@
   <thead><tr><th>#</th><th>Status</th><th>Task</th></tr></thead>
   <tbody>
     <tr><td>T1</td><td><span class="tstat t-done">done</span></td><td>v0.1.0: the six narrative pages, the 23-document reader section, the code snapshot with reading guide, the validate gate, the CI pipeline, versioning, llms.txt, sitemap.</td></tr>
-    <tr><td>T2</td><td><span class="tstat t-open">open</span></td><td><b>Update the site when the live AWS leg runs.</b> The moment the parity matrix's AWS leg and the live smoke test have been executed against a real CloudFront distribution, the status language on the front page, try-it and roadmap changes from "code-complete, not yet run live" to measured results. This is the single most important future edit; it depends on the sentinel MVP team, not the site.</td></tr>
+    <tr><td>T2</td><td><span class="tstat t-open">open</span></td><td><b>Update the site if/when somebody runs the live AWS leg.</b> If a builder picks the design up and executes the parity matrix's AWS leg and the live smoke test against a real CloudFront distribution, the status language on the front page, try-it and roadmap changes from "code-complete, never run live" to measured results. Blocked on somebody building it — see the <a href="../index.html#not-built">not-built note</a>.</td></tr>
     <tr><td>T3</td><td><span class="tstat t-open">open</span></td><td>Add the measured cost comparison (Sentinel live path vs Firehose + WAF baseline) when it exists — the founding argument's loop-closer. No numbers before then.</td></tr>
     <tr><td>T4</td><td><span class="tstat t-open">open</span></td><td>Refresh the code snapshot and testing manual when the sentinel package moves past the packet's 23 May state, keeping the "captured at" provenance line accurate.</td></tr>
   </tbody>
@@ -53,6 +55,7 @@
 
 <h2 id="decisions">Decisions taken while building</h2>
 <ul>
+  <li><b>The not-built note is load-bearing (v0.1.1, 20 Aug 2026, at the project lead's direction).</b> SG/Sentinel has not been built: it is a set of research documents and ideas from May 2026, published as "this is how I would build it", in the hope that somebody builds it — the project lead would really like to use this next generation of WAF security layer in his projects, and has no plans to build it at the moment unless somebody wants to fund it. A site-wide notice bar, the front-page note (<a href="../index.html#not-built">#not-built</a>), and the "prototype exercise" framing on every status claim carry this; the nav pill changed from "mvp" to "not built".</li>
   <li><b>Light theme, not dark.</b> The website brief suggested a near-dark theme; the commissioning instruction was to match the sgit.ai / nhi.sgit.ai design language, which is the cream-light theme with dark terminal blocks for code. The instruction wins; the terminal blocks keep the code-adjacent material dark and high-contrast.</li>
   <li><b>All 23 documents captured, not six pages of synthesis alone.</b> The narrative pages synthesise (per the brief's "don't paste 3,000 words"); the documents section carries the full corpus verbatim with reader pages, following the nhi.sgit.ai raw-plus-curated pattern.</li>
   <li><b>The code snapshot ships in the repo.</b> 556&nbsp;KB buys verifiable provenance: every excerpt on the site can be diffed against <code>code/sentinel/</code>.</li>
@@ -70,7 +73,7 @@
   <div>
     <div class="brandline">sg-sentinel<span>.sgit.ai</span></div>
     <p>SG/Sentinel — an app-coupled edge security and logging layer: L1 decides and signals, L2 acts and writes, L3 (deferred) thinks. All content CC BY 4.0 unless noted.</p>
-    <p class="verline">site <a href="versions.html">v0.1.0</a> · <a href="index.html">engineering</a></p>
+    <p class="verline">site <a href="versions.html">v0.1.1</a> · <a href="index.html">engineering</a></p>
   </div>
   <div>
     <h4>The system</h4>

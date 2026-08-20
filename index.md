@@ -1,12 +1,18 @@
 # sg-sentinel.sgit.ai — Layer 1 decides and signals; Layer 2 acts and writes
 
-> SG/Sentinel is an app-coupled edge security and logging layer built on your own
-> primitives instead of rented AWS WAF + CloudWatch/Firehose. Because the app knows
-> what a valid request looks like, the edge **allowlists** rather than denylists —
-> no invalid request reaches the origin. Rules are data, versioned in git, carrying
+> **⚠ Not built.** SG/Sentinel is a published design — research documents and ideas
+> from May 2026, presented as *"this is how I would build it"* in the hope that
+> somebody builds it. The project lead would really like to use this next generation
+> of WAF security layer in his projects, but has no plans to build it unless somebody
+> funds it. [The full note](index.html#not-built).
+
+> SG/Sentinel is a design for an app-coupled edge security and logging layer built on
+> your own primitives instead of rented AWS WAF + CloudWatch/Firehose. Because the app
+> knows what a valid request looks like, the edge **allowlists** rather than denylists
+> — no invalid request reaches the origin. Rules are data, versioned in git, carrying
 > their own metadata.
 
-*Source: <https://sg-sentinel.sgit.ai/index.html> · site v0.1.0 · markdown twin of the front page.*
+*Source: <https://sg-sentinel.sgit.ai/index.html> · site v0.1.1 · markdown twin of the front page.*
 
 ---
 

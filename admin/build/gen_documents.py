@@ -414,7 +414,7 @@ PAGE = """<!doctype html>
 
 <nav class="site"><div class="row">
   <a class="brand" href="../index.html">sg-sentinel<span>.sgit.ai</span></a>
-  <span class="stage-pill">mvp</span>
+  <span class="stage-pill">not built</span>
   <a class="ver" href="../admin/versions.html" title="Site release history">{ver}</a>
   <a class="nl" href="../architecture.html">Architecture</a>
   <a class="nl" href="../rules.html">Rules</a>
@@ -426,6 +426,8 @@ PAGE = """<!doctype html>
   <a class="nl" href="../admin/comms.html">Comms</a>
   <a class="gh" href="https://github.com/SGit-AI/SGit-AI__Website__SG_Sentinel">★ GitHub</a>
 </div></nav>
+
+<div class="notice-bar"><div class="in"><b>⚠ Not built.</b> SG/Sentinel is a published design from May 2026 — <em>“this is how I would build it”</em> — not a product. No plans to build it unless somebody funds it. <a href="../index.html#not-built">Read the note →</a></div></div>
 
 <main class="doc">
 <div class="crumb"><a href="../index.html">sg-sentinel.sgit.ai</a> / <a href="index.html">documents</a> / {slug}</div>

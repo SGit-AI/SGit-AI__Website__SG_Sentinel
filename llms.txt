@@ -1,7 +1,16 @@
-# sg-sentinel.sgit.ai — SG/Sentinel: an app-coupled edge security and logging layer
+# sg-sentinel.sgit.ai — SG/Sentinel: an app-coupled edge security and logging layer (a design — NOT BUILT)
 
-> SG/Sentinel replaces rented AWS WAF + CloudWatch/Firehose with an edge guard built on
-> your own primitives. Because the app knows what a valid request looks like, the edge
+IMPORTANT: SG/Sentinel has not been built. This site publishes research documents and
+ideas the project lead created in May 2026 (19 design briefs on 18 May; two
+implementation briefs and a prototype exercise on 23 May), as "this is how I would
+build it" — in the hope that somebody builds it, because the project lead would really
+like to use this next generation of WAF security layer in his projects. There are no
+plans to build it at the moment, unless somebody wants to fund it. All "built"/"proven"
+language below refers to the May 2026 prototype exercise — a design artefact that is
+not deployed, not maintained, and not packaged to install.
+
+> SG/Sentinel is a design for an edge guard that replaces rented AWS WAF +
+> CloudWatch/Firehose with a layer built on your own primitives. Because the app knows what a valid request looks like, the edge
 > allowlists rather than denylists — no invalid request reaches the origin. The
 > load-bearing idea: Layer 1 (a CloudFront Function, no I/O) decides and signals; Layer 2
 > (Lambda@Edge, the sole actor and sole I/O owner) acts and writes; a deferred Layer 3
@@ -11,7 +20,7 @@
 > Docker CloudFront-environment simulation, live AWS), held together by a parity matrix
 > asserting identical decisions everywhere.
 
-Site version: v0.1.0 (20 August 2026). Published by the sgit project. All content
+Site version: v0.1.1 (20 August 2026). Published by the sgit project. All content
 CC BY 4.0 unless noted; the code snapshot under the repository licence.
 
 Status, precisely: 149 unit tests passing; both MVP use cases work end to end on the

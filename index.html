@@ -19,8 +19,8 @@
 
 <nav class="site"><div class="row">
   <a class="brand" href="index.html">sg-sentinel<span>.sgit.ai</span></a>
-  <span class="stage-pill">mvp</span>
-  <a class="ver" href="admin/versions.html" title="Site release history">v0.1.0</a>
+  <span class="stage-pill">not built</span>
+  <a class="ver" href="admin/versions.html" title="Site release history">v0.1.1</a>
   <a class="nl" href="architecture.html">Architecture</a>
   <a class="nl" href="rules.html">Rules</a>
   <a class="nl" href="research.html">Research</a>
@@ -32,16 +32,29 @@
   <a class="gh" href="https://github.com/SGit-AI/SGit-AI__Website__SG_Sentinel">★ GitHub</a>
 </div></nav>
 
+<div class="notice-bar"><div class="in"><b>⚠ Not built.</b> SG/Sentinel is a published design from May 2026 — <em>“this is how I would build it”</em> — not a product. No plans to build it unless somebody funds it. <a href="index.html#not-built">Read the note →</a></div></div>
+
 <header class="hero">
-  <div class="eyebrow">Edge security &amp; logging · app-coupled · built on your own primitives</div>
+  <div class="eyebrow">Edge security &amp; logging · app-coupled · a published design, not a product</div>
   <h1>Layer 1 decides and signals.<br>Layer 2 acts and writes.</h1>
-  <p class="sub">SG/Sentinel is an edge guard that replaces rented AWS WAF + CloudWatch/Firehose with a layer you own. Because the app knows what a valid request looks like, the edge can <b>allowlist</b> rather than denylist — no invalid request reaches the origin. Rules are data, versioned in git, carrying their own metadata. The MVP runs the same rule engine across three targets and asserts identical decisions in a parity matrix.</p>
+  <p class="sub">SG/Sentinel is a design for an edge guard that replaces rented AWS WAF + CloudWatch/Firehose with a layer you own. Because the app knows what a valid request looks like, the edge can <b>allowlist</b> rather than denylist — no invalid request reaches the origin. Rules are data, versioned in git, carrying their own metadata. The design was taken all the way to a prototype exercise: the same rule engine across three targets, with a parity matrix asserting identical decisions.</p>
   <div class="ctas">
     <a class="cta1" href="architecture.html">The architecture →</a>
-    <a class="cta2" href="try-it.html">Try it: the CLI →</a>
+    <a class="cta2" href="#not-built">Read this first: it has not been built →</a>
     <a class="cta2" href="research.html">68 days of design, tabletop-tested →</a>
   </div>
 </header>
+
+<!-- the important note -->
+<section class="band" id="not-built" style="padding-top:1rem">
+  <div class="split">
+    <div class="evbox ev-warn"><span class="evtag">Important — this has not been built</span>
+      <p><b>SG/Sentinel does not exist as a product or a running system.</b> What you are reading is a set of research documents and ideas created by the project lead in <b>May 2026</b> — 19 design briefs (18 May), two implementation briefs and a prototype exercise (23 May) — published here as <em>"this is how I would build it."</em></p>
+      <p>It is published in the hope that <b>somebody builds this</b>. In the project lead's words: "I really would like to use this next generation of WAF security layer in my projects" — but there are <b>no plans to build it at the moment, unless somebody wants to fund it</b>. If that's you, or you're building something in this direction, <a href="https://github.com/SGit-AI/SGit-AI__Website__SG_Sentinel/issues" style="display:inline;padding:0">open an issue on GitHub</a>.</p>
+      <p>What the site's status language means in that light: the design exercise included an agent-built prototype — the <a href="code/index.html" style="display:inline;padding:0">code snapshot</a> published here, whose <a href="documents/testing-manual.html" style="display:inline;padding:0">testing manual</a> reports 149 passing tests on the local targets. That prototype is a design artefact from May 2026: it is not deployed anywhere, not in production use, not maintained, and not packaged for you to install. Every "built" or "proven" on this site refers to that prototype exercise, nothing more.</p>
+    </div>
+  </div>
+</section>
 
 <!-- the problem -->
 <section class="band" id="problem">
@@ -152,10 +165,10 @@
   </div>
 </section>
 
-<!-- the proof -->
+<!-- the prototype -->
 <section class="band alt" id="proof">
-  <h2>The proof: it exists and runs</h2>
-  <p class="blurb">The same L1 JS engine and the same L2 Python actor run three ways, and a parity matrix asserts identical signals, identical log records, and identical enforcement across all of them. Divergence between targets is a P1 bug by definition.</p>
+  <h2>How far the design went: the prototype exercise</h2>
+  <p class="blurb">The May 2026 design exercise didn't stop at documents — it produced a prototype: the same L1 JS engine and the same L2 Python actor running three ways, with a parity matrix asserting identical signals, log records and enforcement across all of them. A design artefact, not a product — but proof the design is buildable.</p>
   <div class="cards">
     <div class="card"><span class="tag">Target B</span><h3>Local-direct (Node)</h3><p>The real L1 engine via <code>node</code>, the real Python L2 in-process, local-FS sink. Fully offline, zero AWS. <span class="st st-done">proven</span></p></div>
     <div class="card"><span class="tag">Target C</span><h3>Local Docker (CF-env sim)</h3><p>The same JS file behind an HTTP listener under CloudFront-like Node constraints. Catches CF-runtime surprises before AWS. <span class="st st-done">proven</span></p></div>
@@ -163,7 +176,7 @@
   </div>
   <div class="split" style="margin-top:1.6rem">
     <div class="evbox ev-warn"><span class="evtag">Status — precise</span>
-      <p><b>149 unit tests passing; both MVP use cases — logging to S3 and blocking obvious-bad — work end to end.</b> Local-direct and local-docker are proven and tested. The live AWS path is code-complete and unit-tested via in-memory doubles, but <b>has not yet been run against a real CloudFront distribution</b>. The parity matrix's AWS leg is written and skip-guarded, waiting for that run.</p>
+      <p>All of the following describes the <b>May 2026 prototype exercise</b>, per its testing manual — not a live or maintained system (<a href="#not-built" style="display:inline;padding:0">see the note above</a>): 149 unit tests passing; both MVP use cases — logging to S3 and blocking obvious-bad — working end to end on the local-direct and local-docker targets. The live AWS path was code-complete and unit-tested via in-memory doubles, but <b>was never run against a real CloudFront distribution</b>. The parity matrix's AWS leg is written and skip-guarded, waiting for a run that hasn't happened.</p>
     </div>
   </div>
   <pre class="shell" style="max-width:960px;margin:1.4rem auto 0"><span class="d">$</span> sg sentinel rules test
@@ -179,7 +192,7 @@ GET     (empty)         203.0.113.5    <span class="r">block</span>    0007  dro
 
 <!-- the method -->
 <section class="band" id="method">
-  <h2>The method: designed on paper, broken on paper, then built</h2>
+  <h2>The method: designed on paper, broken on paper, then prototyped</h2>
   <p class="blurb">SG/Sentinel was designed over 68 days of iterative briefs — 19 documents on day 68 alone — then pressure-tested with two tabletop simulations that traced requests through the paper architecture and surfaced <b>25 gaps before any code was written</b>, resolved in a consolidated addendum. The design process is part of the system.</p>
   <div class="cards">
     <a class="card" href="research.html#tabletop"><span class="tag">Tabletop</span><h3>25 gaps, found on paper</h3><p>Fast-track was redesigned as zero-trust acceleration, honeytokens became the intent signal, and per-IP keying died against residential proxies — all before implementation.</p><span class="go">The stories →</span></a>
@@ -202,7 +215,7 @@ GET     (empty)         203.0.113.5    <span class="r">block</span>    0007  dro
   <div>
     <div class="brandline">sg-sentinel<span>.sgit.ai</span></div>
     <p>SG/Sentinel — an app-coupled edge security and logging layer: L1 decides and signals, L2 acts and writes, L3 (deferred) thinks. Built and documented in the open. All content CC BY 4.0 unless noted.</p>
-    <p class="verline">site <a href="admin/versions.html">v0.1.0</a> · <a href="admin/index.html">engineering</a> · <a href="index.md">this page as markdown</a></p>
+    <p class="verline">site <a href="admin/versions.html">v0.1.1</a> · <a href="admin/index.html">engineering</a> · <a href="index.md">this page as markdown</a></p>
   </div>
   <div>
     <h4>The system</h4>

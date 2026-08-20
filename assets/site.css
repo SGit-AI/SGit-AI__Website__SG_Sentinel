@@ -37,6 +37,12 @@ nav.site .gh:hover{border-color:var(--accent);text-decoration:none}
 a.ver{font-family:var(--mono);font-size:.68rem;color:var(--dim2);border:1px solid var(--line);border-radius:99px;padding:.14rem .55rem;white-space:nowrap}
 a.ver:hover{color:var(--accent-dk);border-color:var(--accent);text-decoration:none}
 
+/* ---------- not-built notice bar ---------- */
+.notice-bar{background:rgba(180,83,9,.08);border-bottom:1px solid rgba(180,83,9,.25)}
+.notice-bar .in{max-width:var(--wide);margin:0 auto;padding:.45rem 1.1rem;font-size:.8rem;color:#7c3f09;line-height:1.5}
+.notice-bar b{color:#7c3f09}
+.notice-bar a{color:var(--accent-dk);font-weight:600;white-space:nowrap}
+
 /* ---------- hero ---------- */
 header.hero{text-align:center;padding:4.2rem 1.2rem 2.6rem;max-width:1000px;margin:0 auto}
 .eyebrow{font-size:.7rem;font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:var(--accent)}

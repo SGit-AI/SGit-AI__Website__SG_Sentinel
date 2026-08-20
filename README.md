@@ -1,11 +1,20 @@
 # sg-sentinel.sgit.ai — the SG/Sentinel website
 
-The website for **SG/Sentinel**, an app-coupled edge security and logging layer built
-on the sgit project's own primitives instead of rented AWS WAF + CloudWatch/Firehose.
-The load-bearing idea: **Layer 1 decides and signals** (a CloudFront Function with no
-I/O — it cannot write and must not enforce), **Layer 2 acts and writes** (the sole
-actor and sole I/O owner), and a deferred Layer 3 thinks asynchronously. The MVP
-proves the spine across three execution targets, held together by a parity matrix.
+The website for **SG/Sentinel**, a design for an app-coupled edge security and
+logging layer built on the sgit project's own primitives instead of rented AWS WAF +
+CloudWatch/Firehose. The load-bearing idea: **Layer 1 decides and signals** (a
+CloudFront Function with no I/O — it cannot write and must not enforce), **Layer 2
+acts and writes** (the sole actor and sole I/O owner), and a deferred Layer 3 thinks
+asynchronously.
+
+> **⚠ Important: SG/Sentinel has not been built.** This site publishes a set of
+> research documents and ideas the project lead created in May 2026 — 19 design
+> briefs (18 May), two implementation briefs and a prototype exercise (23 May) — as
+> *"this is how I would build it"*, in the hope that **somebody builds this**: the
+> project lead would really like to use this next generation of WAF security layer
+> in his projects, but has no plans to build it at the moment, unless somebody wants
+> to fund it. The code snapshot and test claims on the site describe that May 2026
+> prototype exercise — a design artefact, not a deployed or maintained system.
 
 Live site: https://sg-sentinel.sgit.ai (GitHub Pages, deployed from `dev`).
 
