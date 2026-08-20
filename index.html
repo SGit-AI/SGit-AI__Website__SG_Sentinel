@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>sg-sentinel.sgit.ai — an app-coupled edge guard: L1 decides, L2 acts</title>
+<meta name="description" content="SG/Sentinel is an app-coupled edge security and logging layer built on your own primitives instead of rented AWS WAF + Firehose. Layer 1 decides and signals; Layer 2 acts and writes; the same rule engine runs identically across three targets, held together by a parity matrix.">
+<link rel="canonical" href="https://sg-sentinel.sgit.ai/index.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="sg-sentinel.sgit.ai">
+<meta property="og:url" content="https://sg-sentinel.sgit.ai/index.html">
+<meta property="og:title" content="sg-sentinel.sgit.ai — an app-coupled edge guard: L1 decides, L2 acts">
+<meta property="og:description" content="Edge security and logging on your own primitives: an allowlisting guard where Layer 1 decides and signals, Layer 2 acts and writes, and a parity matrix asserts identical decisions across local Node, local Docker, and live AWS.">
+<meta name="twitter:card" content="summary">
+<link rel="alternate" type="text/markdown" href="index.md" title="This page as markdown">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+
+<nav class="site"><div class="row">
+  <a class="brand" href="index.html">sg-sentinel<span>.sgit.ai</span></a>
+  <span class="stage-pill">mvp</span>
+  <a class="ver" href="admin/versions.html" title="Site release history">v0.1.0</a>
+  <a class="nl" href="architecture.html">Architecture</a>
+  <a class="nl" href="rules.html">Rules</a>
+  <a class="nl" href="research.html">Research</a>
+  <a class="nl" href="try-it.html">Try it</a>
+  <a class="nl" href="roadmap.html">Roadmap</a>
+  <a class="nl" href="documents/index.html">Docs</a>
+  <a class="nl" href="code/index.html">Code</a>
+  <a class="nl" href="admin/comms.html">Comms</a>
+  <a class="gh" href="https://github.com/SGit-AI/SGit-AI__Website__SG_Sentinel">★ GitHub</a>
+</div></nav>
+
+<header class="hero">
+  <div class="eyebrow">Edge security &amp; logging · app-coupled · built on your own primitives</div>
+  <h1>Layer 1 decides and signals.<br>Layer 2 acts and writes.</h1>
+  <p class="sub">SG/Sentinel is an edge guard that replaces rented AWS WAF + CloudWatch/Firehose with a layer you own. Because the app knows what a valid request looks like, the edge can <b>allowlist</b> rather than denylist — no invalid request reaches the origin. Rules are data, versioned in git, carrying their own metadata. The MVP runs the same rule engine across three targets and asserts identical decisions in a parity matrix.</p>
+  <div class="ctas">
+    <a class="cta1" href="architecture.html">The architecture →</a>
+    <a class="cta2" href="try-it.html">Try it: the CLI →</a>
+    <a class="cta2" href="research.html">68 days of design, tabletop-tested →</a>
+  </div>
+</header>
+
+<!-- the problem -->
+<section class="band" id="problem">
+  <h2>The problem: renting your own blind spot</h2>
+  <p class="blurb">Edge security and logging today means AWS WAF plus CloudWatch and Kinesis Firehose. Three problems converge — and underneath them, one fear: a single client-side bug once caused runaway redirect traffic, and nothing at the edge would catch the next one before the bill did.</p>
+  <div class="cards">
+    <div class="card"><span class="tag">Visibility</span><h3>No real-time view of your traffic</h3><p>Who is requesting what, how often, from where — logs arrive minutes later through a pipeline you don't control. An operational blind spot for cost, security and performance.</p></div>
+    <div class="card"><span class="tag">Cost</span><h3>Logging as a major cost line</h3><p>CloudWatch + Firehose is per-GB ingestion, processing and delivery. The bill scales with your success, for a job that is fundamentally "write a clean record to S3".</p></div>
+    <div class="card"><span class="tag">Control</span><h3>Rule-opaque, rent-like WAF</h3><p>AWS WAF is priced per web-ACL, per rule, per million requests — and you can't reason about why a request was blocked. It feels like rent, not like a tool you own.</p></div>
+  </div>
+</section>
+
+<!-- the idea -->
+<section class="band alt" id="idea">
+  <h2>The idea: the app knows what valid looks like</h2>
+  <p class="blurb">A generic WAF is blind to the application it protects, so it denylists known-bad and lets everything else through. An app-coupled guard inverts that: because we control both client and server, the edge knows the valid request space — and it is tiny. Anything outside it is an attack, a bug, or noise. None of those deserve origin resources.</p>
+  <div class="split">
+    <table>
+      <thead><tr><th></th><th class="rent">Generic WAF</th><th class="run">SG/Sentinel</th></tr></thead>
+      <tbody>
+        <tr><td><b>Posture</b></td><td>Denylist known-bad, allow the rest</td><td><b class="yes">Allowlist known-good, drop the rest</b></td></tr>
+        <tr><td><b>Knows the app?</b></td><td><b class="no">No</b> — generic signatures</td><td><b class="yes">Yes</b> — coupled to routes, schemas, contracts</td></tr>
+        <tr><td><b>Rules</b></td><td>Vendor-configured, opaque, rented</td><td>Data in git, versioned, carrying attack technique, confidence, compliance metadata</td></tr>
+        <tr><td><b>Every block</b></td><td>Often unexplainable</td><td><b class="yes">Has a logged, inspectable reason</b></td></tr>
+        <tr><td><b>Logging</b></td><td>CloudWatch → Firehose → per-GB pricing</td><td>Clean, replayable records written directly to S3</td></tr>
+        <tr><td><b>Cost shape</b></td><td><b class="no">Rent that scales with traffic</b></td><td>Your compute at the edge; avoids per-request WAF and Firehose pricing<sup>†</sup></td></tr>
+      </tbody>
+    </table>
+    <p class="cap"><sup>†</sup> The cost argument is qualitative until measured — measurement against the Firehose + WAF baseline is an explicit open item on the <a href="roadmap.html">roadmap</a>. No invented numbers here.</p>
+  </div>
+</section>
+
+<!-- the architecture -->
+<section class="band" id="architecture">
+  <h2>Slow analysis, fast enforcement — in three layers</h2>
+  <p class="blurb">The load-bearing idea: a CloudFront Function has no network and no filesystem, so it physically cannot write — and by design it must not enforce. Layer 1's whole job is to decide and emit a structured <em>signal</em>. Layer 2 is the sole actor and sole I/O owner. Blocking is just a logged action with an enforcement side-effect.</p>
+
+  <div class="diagram">
+    <div class="scroll"><svg viewBox="0 0 1040 445" role="img" aria-label="Diagram of the SG/Sentinel signal spine: every request enters Layer 1, a CloudFront Function with no I/O that decides and emits a Schema__Sentinel__Signal envelope; Layer 2, a Lambda at Edge Python actor, validates the signal, enforces pass or 403 or 404, and writes one log record to the sink; allowed requests reach the origin; Layer 3, deferred, thinks asynchronously.">
+      <defs>
+        <marker id="arr"  viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#5c5f66"/></marker>
+        <marker id="arrG" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#0f766e"/></marker>
+        <marker id="arrR" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#b91c1c"/></marker>
+      </defs>
+
+      <!-- incoming request -->
+      <text x="18" y="140" class="sub2">every</text>
+      <text x="18" y="156" class="sub2">request</text>
+      <path class="flow" d="M14 165 H96"/>
+
+      <!-- L1 -->
+      <rect class="box box-l1" x="100" y="70" width="260" height="190" rx="10"/>
+      <text x="118" y="98"  class="tag-l1">LAYER 1 — DECIDES + SIGNALS</text>
+      <text x="118" y="118" class="sub2">CloudFront Function · JS · no I/O</text>
+      <text x="118" y="148" class="mono">assign request_id</text>
+      <text x="118" y="168" class="mono">capture request fields</text>
+      <text x="118" y="188" class="mono">run 6 deterministic rules</text>
+      <text x="118" y="208" class="mono">emit the signal</text>
+      <text x="118" y="238" class="mono-dim">cannot write · must not enforce</text>
+
+      <!-- signal envelope -->
+      <path class="flow" d="M360 165 H396"/>
+      <rect class="box" x="400" y="105" width="180" height="122" rx="10"/>
+      <text x="414" y="130" class="mono" style="font-weight:700">Schema__Sentinel__</text>
+      <text x="414" y="146" class="mono" style="font-weight:700">Signal</text>
+      <text x="414" y="170" class="mono-dim">verdict · reason</text>
+      <text x="414" y="186" class="mono-dim">rule_id · action</text>
+      <text x="414" y="202" class="mono-dim">captured · versions</text>
+      <path class="flow" d="M580 165 H616"/>
+      <text x="400" y="250" class="mono-dim">transport: x-sentinel-signal header (AWS)</text>
+      <text x="400" y="266" class="mono-dim">in-process (local) — schema never differs</text>
+
+      <!-- L2 -->
+      <rect class="box box-l2" x="620" y="70" width="260" height="190" rx="10"/>
+      <text x="638" y="98"  class="tag-l2">LAYER 2 — ACTS + WRITES</text>
+      <text x="638" y="118" class="sub2">Lambda@Edge · Python · sole actor, sole I/O</text>
+      <text x="638" y="148" class="mono">deserialise + validate signal</text>
+      <text x="638" y="168" class="mono">enforce: pass / 403 / 404</text>
+      <text x="638" y="188" class="mono">build log record</text>
+      <text x="638" y="208" class="mono">write to sink</text>
+      <text x="638" y="238" class="mono-dim">never re-evaluates rules</text>
+
+      <!-- outcomes -->
+      <path class="flow-ok" d="M880 115 H916"/>
+      <rect class="box" x="920" y="82" width="106" height="64" rx="10"/>
+      <text x="936" y="110" class="lbl" style="font-size:14px">origin</text>
+      <text x="936" y="130" class="sub2">allow only</text>
+
+      <path class="flow-block" d="M880 205 H916"/>
+      <rect class="box" x="920" y="176" width="106" height="64" rx="10"/>
+      <text x="936" y="204" class="lbl" style="font-size:14px;fill:#b91c1c">403 / 404</text>
+      <text x="936" y="224" class="sub2">block enforced</text>
+
+      <!-- sink -->
+      <path class="flow" d="M750 260 V306"/>
+      <rect class="box" x="620" y="310" width="260" height="80" rx="10"/>
+      <text x="638" y="338" class="lbl" style="font-size:14px">log sink</text>
+      <text x="638" y="358" class="sub2">S3 (AWS) · local FS (local) · same key layout</text>
+      <text x="638" y="376" class="mono-dim">one replayable record per request</text>
+
+      <!-- L3 -->
+      <rect x="100" y="310" width="480" height="80" rx="10" fill="#f2f0e9" stroke="#d5d0c2" stroke-width="1.25" stroke-dasharray="6 4"/>
+      <text x="118" y="338" class="mono-dim" style="font-weight:700">LAYER 3 — THINKS (deferred)</text>
+      <text x="118" y="358" class="sub2">async analysis · LLM interpretation · rule generation</text>
+      <text x="118" y="376" class="mono-dim">never inline — slow analysis, fast enforcement</text>
+    </svg></div>
+    <p class="cap">The signal spine. The envelope — <code>Schema__Sentinel__Signal</code> — is byte-identical across all three targets; only the transport and the sink swap. <a href="architecture.html">The full architecture, including the three targets →</a></p>
+  </div>
+</section>
+
+<!-- the proof -->
+<section class="band alt" id="proof">
+  <h2>The proof: it exists and runs</h2>
+  <p class="blurb">The same L1 JS engine and the same L2 Python actor run three ways, and a parity matrix asserts identical signals, identical log records, and identical enforcement across all of them. Divergence between targets is a P1 bug by definition.</p>
+  <div class="cards">
+    <div class="card"><span class="tag">Target B</span><h3>Local-direct (Node)</h3><p>The real L1 engine via <code>node</code>, the real Python L2 in-process, local-FS sink. Fully offline, zero AWS. <span class="st st-done">proven</span></p></div>
+    <div class="card"><span class="tag">Target C</span><h3>Local Docker (CF-env sim)</h3><p>The same JS file behind an HTTP listener under CloudFront-like Node constraints. Catches CF-runtime surprises before AWS. <span class="st st-done">proven</span></p></div>
+    <div class="card"><span class="tag">Target A</span><h3>Live AWS (CF + Lambda@Edge)</h3><p>CloudFront Function on viewer-request, Lambda@Edge on origin-request, cache disabled so L2 sees every hit. <span class="st st-code">code-complete</span></p></div>
+  </div>
+  <div class="split" style="margin-top:1.6rem">
+    <div class="evbox ev-warn"><span class="evtag">Status — precise</span>
+      <p><b>149 unit tests passing; both MVP use cases — logging to S3 and blocking obvious-bad — work end to end.</b> Local-direct and local-docker are proven and tested. The live AWS path is code-complete and unit-tested via in-memory doubles, but <b>has not yet been run against a real CloudFront distribution</b>. The parity matrix's AWS leg is written and skip-guarded, waiting for that run.</p>
+    </div>
+  </div>
+  <pre class="shell" style="max-width:960px;margin:1.4rem auto 0"><span class="d">$</span> sg sentinel rules test
+<span class="d">Method  Path            Source IP      Verdict  Rule  Action</span>
+GET     /index.html     198.51.100.2   <span class="g">allow</span>    0001  pass
+GET     /etc/passwd     185.10.10.10   <span class="r">block</span>    0012  drop_403
+GET     /wp-login.php   91.20.20.20    <span class="r">block</span>    0018  deflect_404
+GET     /.env           77.30.30.30    <span class="r">block</span>    0014  deflect_404
+GET     /index.html     10.0.0.6       <span class="r">block</span>    0003  drop_403
+GET     (empty)         203.0.113.5    <span class="r">block</span>    0007  drop_403</pre>
+  <p class="blurb" style="margin-top:1rem;margin-bottom:0">The canonical request set — the same six requests every target must decide identically. <a href="try-it.html">Run it yourself →</a></p>
+</section>
+
+<!-- the method -->
+<section class="band" id="method">
+  <h2>The method: designed on paper, broken on paper, then built</h2>
+  <p class="blurb">SG/Sentinel was designed over 68 days of iterative briefs — 19 documents on day 68 alone — then pressure-tested with two tabletop simulations that traced requests through the paper architecture and surfaced <b>25 gaps before any code was written</b>, resolved in a consolidated addendum. The design process is part of the system.</p>
+  <div class="cards">
+    <a class="card" href="research.html#tabletop"><span class="tag">Tabletop</span><h3>25 gaps, found on paper</h3><p>Fast-track was redesigned as zero-trust acceleration, honeytokens became the intent signal, and per-IP keying died against residential proxies — all before implementation.</p><span class="go">The stories →</span></a>
+    <a class="card" href="research.html#prior-art"><span class="tag">Prior art</span><h3>Positioned, not reinvented</h3><p>OPA's decision/enforcement split, Sigma's compile-to-backend model, OWASP CRS anomaly scoring, deception technology, zero-trust — learned from deliberately.</p><span class="go">What was borrowed →</span></a>
+    <a class="card" href="documents/index.html"><span class="tag">The corpus</span><h3>Every brief, readable here</h3><p>All 23 documents — the design series, the implementation briefs, the testing manual — captured verbatim and rendered in-page, raw markdown as the source of truth.</p><span class="go">The documents →</span></a>
+  </div>
+</section>
+
+<!-- what's next -->
+<section class="band alt" id="next">
+  <h2>Honestly deferred</h2>
+  <p class="blurb">The MVP is a deliberate tiny core. Fingerprint/fast-track, anomaly scoring, the Layer 3 async/LLM tier, the unified evidence-and-compliance graph, and multi-CDN are designed but not built — and the site says so plainly rather than implying otherwise.</p>
+  <div class="ctas">
+    <a class="cta1" href="roadmap.html">What's built vs deferred →</a>
+    <a class="cta2" href="rules.html">The six rules of the tiny core →</a>
+  </div>
+</section>
+
+<footer class="site"><div class="cols">
+  <div>
+    <div class="brandline">sg-sentinel<span>.sgit.ai</span></div>
+    <p>SG/Sentinel — an app-coupled edge security and logging layer: L1 decides and signals, L2 acts and writes, L3 (deferred) thinks. Built and documented in the open. All content CC BY 4.0 unless noted.</p>
+    <p class="verline">site <a href="admin/versions.html">v0.1.0</a> · <a href="admin/index.html">engineering</a> · <a href="index.md">this page as markdown</a></p>
+  </div>
+  <div>
+    <h4>The system</h4>
+    <a href="architecture.html">Architecture</a>
+    <a href="rules.html">Rules as data</a>
+    <a href="try-it.html">Try it</a>
+    <a href="roadmap.html">Roadmap</a>
+  </div>
+  <div>
+    <h4>The record</h4>
+    <a href="research.html">The design method</a>
+    <a href="documents/index.html">Documents</a>
+    <a href="code/index.html">The code</a>
+  </div>
+  <div>
+    <h4>Site</h4>
+    <a href="admin/comms.html">Comms</a>
+    <a href="admin/versions.html">Versions</a>
+    <a href="llms.txt">llms.txt</a>
+    <a href="https://sgit.ai">sgit.ai</a>
+    <a href="https://nhi.sgit.ai">nhi.sgit.ai</a>
+    <a href="https://github.com/SGit-AI/SGit-AI__Website__SG_Sentinel">GitHub</a>
+  </div>
+</div></footer>
+
+</body>
+</html>

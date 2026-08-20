@@ -1,0 +1,101 @@
+# sg-sentinel.sgit.ai — SG/Sentinel: an app-coupled edge security and logging layer
+
+> SG/Sentinel replaces rented AWS WAF + CloudWatch/Firehose with an edge guard built on
+> your own primitives. Because the app knows what a valid request looks like, the edge
+> allowlists rather than denylists — no invalid request reaches the origin. The
+> load-bearing idea: Layer 1 (a CloudFront Function, no I/O) decides and signals; Layer 2
+> (Lambda@Edge, the sole actor and sole I/O owner) acts and writes; a deferred Layer 3
+> thinks asynchronously. Rules are data, versioned in git, carrying attack technique,
+> confidence and compliance metadata. The MVP proves the spine with two use cases —
+> logging to S3 and blocking obvious-bad — across three targets (local Node, local
+> Docker CloudFront-environment simulation, live AWS), held together by a parity matrix
+> asserting identical decisions everywhere.
+
+Site version: v0.1.0 (20 August 2026). Published by the sgit project. All content
+CC BY 4.0 unless noted; the code snapshot under the repository licence.
+
+Status, precisely: 149 unit tests passing; both MVP use cases work end to end on the
+local-direct and local-docker targets. The live AWS path is code-complete and
+unit-tested via in-memory doubles but has NOT yet been run against a real CloudFront
+distribution. Cost vs the Firehose+WAF baseline is a qualitative argument until
+measured — the site claims no numbers.
+
+## The system
+
+- [Architecture](https://sg-sentinel.sgit.ai/architecture.html): the governing
+  correction (L1 decides + signals, never acts; L2 is the sole actor and I/O owner),
+  the byte-identical signal spine (Schema__Sentinel__Signal, raw-JSON
+  x-sentinel-signal header on AWS, in-process locally), the three targets, the
+  Lambda@Edge gotchas, and the parity matrix as the definition of done.
+- [Rules as data](https://sg-sentinel.sgit.ai/rules.html): the tiny core's six
+  deterministic rules verbatim (0001 capture-all, 0003 banned-ip, 0007 malformed,
+  0012 path-never-valid, 0014 hidden-file-probe, 0018 wp-scan-on-static), each a pure
+  function with first-block-wins ordering, MITRE ATT&CK tags in the metadata registry,
+  HTTP-level block actions (drop_403 / deflect_404), and the designed-but-deferred
+  fractal rule graph, rules-as-vault, and anomaly-scoring spectrum.
+- [Try it](https://sg-sentinel.sgit.ai/try-it.html): every `sg sentinel` command from
+  the testing manual — the offline stack (CF-env sim container by default, --direct
+  for node), logs/blocks reading the sink, the mutation-gated live AWS flow, the
+  Textual operator TUIs, the read-only LLM chat grounded in live state, and the
+  traffic generator + echo origin whose bare-vs-fronted contrast is the impact
+  measurement.
+- [Roadmap](https://sg-sentinel.sgit.ai/roadmap.html): built vs code-complete vs
+  deferred, honestly — the live-AWS run and the cost measurement as the open items in
+  front of everything; fingerprint/fast-track, anomaly scoring, Layer 3 async/LLM, the
+  known-good profile, the unified evidence-and-compliance graph, deception, threat
+  intel, multi-CDN, cache-hit logging all designed and deferred; the honest limits
+  (in-profile exploits; defence in depth, not sole defence; no content inspection by
+  zero-knowledge design).
+
+## The method
+
+- [Research](https://sg-sentinel.sgit.ai/research.html): 68 days of design — 19 briefs
+  dated 18 May 2026 plus the implementation pair on 23 May — pressure-tested with two
+  tabletop simulations that surfaced 25 gaps before any code was written. The stories:
+  fast-track redesigned as zero-trust acceleration (a fast-tracked user turning
+  malicious was fast-tracked by the naive spec); honeytokens as the intent signal
+  (IAM verifies identity, deception confirms intent); per-IP keying dead against
+  residential proxies (~4 in 10 attacking IPs, so rate-limit per target and key
+  evidence multi-dimensionally). Prior art positioned deliberately: OPA's PDP/PEP
+  split, Sigma/Detection-as-Code's compile-to-backend and rule retirement, OWASP CRS
+  anomaly scoring and paranoia levels, deception technology, zero-trust/BeyondCorp.
+  The honest limit documented: a structurally-valid request with a malicious payload
+  passes structural validation — Sentinel is defence in depth, not a sole defence.
+
+## The documents (all 23, verbatim, with reader pages)
+
+- [Index](https://sg-sentinel.sgit.ai/documents/index.html) — each page: summary, key
+  concepts, key ideas, full markdown rendered from the raw file (the source of truth)
+  under https://sg-sentinel.sgit.ai/briefs/
+- Read first: [MVP implementation architecture, v0.27.59](https://sg-sentinel.sgit.ai/documents/mvp-architecture.html) ·
+  [file-by-file dev brief, v0.27.60](https://sg-sentinel.sgit.ai/documents/mvp-implementation.html) ·
+  [testing manual](https://sg-sentinel.sgit.ai/documents/testing-manual.html)
+- The v0.27.58 design series (18 May 2026): principles, execution model, edge MVP,
+  rules engine, rule architecture (fractal graph), interactivity & phases, codebase
+  extension, delegation & choke-points, time as a first-class dimension,
+  developer-friendliness & the evidence graph, standards research, compliance as a
+  living graph, architecture & data flows, TUI mockups, the behavioural spec, tabletop
+  simulations 1 & 2, the consolidated addendum, and the planning brief — all under
+  https://sg-sentinel.sgit.ai/documents/
+- [The website brief itself](https://sg-sentinel.sgit.ai/documents/website-brief.html)
+  (v0.27.61) — captured for the site's own provenance.
+
+## The code
+
+- [Reading guide](https://sg-sentinel.sgit.ai/code/index.html): the 115-file
+  `sentinel/` package snapshot, verbatim from the packet. Best single file:
+  https://sg-sentinel.sgit.ai/code/sentinel/runtime/layer1/sentinel_l1.js — the whole
+  L1 engine (six rules, evaluate, CloudFront handler) in one dependency-free file that
+  decides and signals, never acts. Also: Sentinel__L2__Actor.py (the sole actor),
+  Schema__Sentinel__Signal.py (the parity spine), the log sinks, the deployer, the
+  rule registry with ATT&CK tags, the TUIs and traffic tooling.
+
+## Site
+
+- [Comms: tasks, requests, decisions](https://sg-sentinel.sgit.ai/admin/comms.html)
+- [Release history](https://sg-sentinel.sgit.ai/admin/versions.html)
+- [How the site is built](https://sg-sentinel.sgit.ai/admin/index.html) — validate
+  gate (version agreement, internal links, key-leak tripwire), then CI: validate →
+  auto-tag → deploy to GitHub Pages on every push to dev.
+- Related: [sgit.ai](https://sgit.ai) ([llms.txt](https://sgit.ai/llms.txt)) and
+  [nhi.sgit.ai](https://nhi.sgit.ai) ([llms.txt](https://nhi.sgit.ai/llms.txt))

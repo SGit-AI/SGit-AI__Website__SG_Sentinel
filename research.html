@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Research — 68 days of design, two tabletop simulations, 25 gaps · sg-sentinel.sgit.ai</title>
+<meta name="description" content="How SG/Sentinel was designed: 19 briefs on day 68 of an iterative series, pressure-tested with tabletop simulations that surfaced 25 gaps before any code was written, positioned against OPA, Sigma/Detection-as-Code, OWASP CRS, deception technology and zero-trust.">
+<link rel="canonical" href="https://sg-sentinel.sgit.ai/research.html">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+
+<nav class="site"><div class="row">
+  <a class="brand" href="index.html">sg-sentinel<span>.sgit.ai</span></a>
+  <span class="stage-pill">mvp</span>
+  <a class="ver" href="admin/versions.html" title="Site release history">v0.1.0</a>
+  <a class="nl" href="architecture.html">Architecture</a>
+  <a class="nl" href="rules.html">Rules</a>
+  <a class="nl here" href="research.html">Research</a>
+  <a class="nl" href="try-it.html">Try it</a>
+  <a class="nl" href="roadmap.html">Roadmap</a>
+  <a class="nl" href="documents/index.html">Docs</a>
+  <a class="nl" href="code/index.html">Code</a>
+  <a class="nl" href="admin/comms.html">Comms</a>
+  <a class="gh" href="https://github.com/SGit-AI/SGit-AI__Website__SG_Sentinel">★ GitHub</a>
+</div></nav>
+
+<main class="doc">
+<div class="crumb"><a href="index.html">sg-sentinel.sgit.ai</a> / research</div>
+<h1>Designed on paper, broken on paper, then built</h1>
+<p class="lead">SG/Sentinel's design is day 68 of an iterative brief series: 19 design briefs dated 18 May 2026, followed by the two implementation briefs on 23 May — each one a voice memo turned into a decision record. Before any code, the design was <b>pressure-tested with tabletop simulations</b> — requests traced through the paper architecture — which surfaced <b>25 gaps</b>, seven of them major. The gaps were resolved in a consolidated addendum, and only then did implementation start. The method is part of the system.</p>
+
+<h2 id="series">The shape of the series</h2>
+<div class="tablewrap"><table>
+  <thead><tr><th>Stage</th><th>Documents</th><th>What it settled</th></tr></thead>
+  <tbody>
+    <tr><td>Principles</td><td><a href="documents/principles.html">principles</a>, <a href="documents/execution-model.html">execution model</a>, <a href="documents/edge-mvp.html">MVP scope</a></td><td>Why build it (Firehose cost, WAF rent, the visibility blind spot); the layered-responder model; no-invalid-request; "not everything has to be online"</td></tr>
+    <tr><td>The engine</td><td><a href="documents/rules-engine.html">rules engine</a>, <a href="documents/rule-architecture.html">rule architecture</a></td><td>Rules are everything; tiny core; the fractal graph; metadata; the deterministic-to-opinion spectrum</td></tr>
+    <tr><td>Development model</td><td><a href="documents/interactivity.html">interactivity &amp; phases</a>, <a href="documents/codebase-extension.html">codebase extension</a>, <a href="documents/delegation.html">delegation &amp; choke-points</a></td><td>Local-everywhere; dev/main/prod; dangerous dev-only rules; Sentinel as the app's trust boundary; deploy parity as a P1 invariant</td></tr>
+    <tr><td>Strategy</td><td><a href="documents/time-dimension.html">time as a dimension</a>, <a href="documents/developer-friendliness.html">evidence graph</a>, <a href="documents/research-standards.html">standards research</a>, <a href="documents/compliance.html">compliance graph</a></td><td>Detect-before-damage; make good users faster; the evidence graph; ATT&amp;CK/CRS/STIX compatibility; compliance computed from what is deployed</td></tr>
+    <tr><td>The spec</td><td><a href="documents/behavioural-spec.html">rules of the game</a>, <a href="documents/tui-mockups.html">TUI mockups</a></td><td>The behavioural answer key the simulations run against; the operator surfaces as acceptance criteria</td></tr>
+    <tr><td><b>The test</b></td><td><a href="documents/tabletop-1.html">tabletop 1</a>, <a href="documents/tabletop-2.html">tabletop 2</a>, <a href="documents/addendum.html">addendum</a>, <a href="documents/planning.html">planning</a></td><td>25 gaps found and resolved; prior art positioned; the MVP boundary drawn: "we have enough to build"</td></tr>
+    <tr><td>Implementation</td><td><a href="documents/mvp-architecture.html">v0.27.59 architecture</a>, <a href="documents/mvp-implementation.html">v0.27.60 dev brief</a></td><td>The signal spine, the three targets, six build phases, the parity matrix as the definition of done</td></tr>
+  </tbody>
+</table></div>
+
+<h2 id="tabletop">The tabletop: 25 gaps before a line of code</h2>
+<p>Eleven simulated requests — happy paths, cache hits, probes, brute force, a fast-tracked user turning malicious, an in-profile exploit — were traced layer by layer against the behavioural spec, and every place the paper behaviour was unclear, contradictory or wrong was flagged as a numbered GAP with a proposed resolution. Part 1 (generic flows and logging) found 11; part 2 (blocking) found 14, seven major. Three of the stories are worth telling in full:</p>
+
+<h3>Fast-track had to be redesigned as zero-trust acceleration</h3>
+<p>The original design fast-tracked known-good fingerprints past the checks. Simulation 9 played a fast-tracked user whose session turns malicious — requesting an admin endpoint, then someone else's vault — and the naive spec <em>fast-tracked the attack</em>, because the user was on the allowlist. The resolution rewrote what fast-track means: it is <b>never</b> authorisation-skipping. Identity-verified users skip only the expensive identity-establishment cost, carried in a signed token L1 can validate without a lookup; authorisation is always enforced, per user; and trust is continuously re-verified. Fast-track became zero-trust acceleration — a BeyondCorp idea arrived at by breaking the design on paper.</p>
+
+<h3>Honeytokens became the intent signal</h3>
+<p>The follow-on gap: even a correctly-authorised, identity-verified session can be compromised — IAM verifies identity, it cannot confirm intent. The resolution came from deception technology: place decoy endpoints no legitimate flow ever touches. A fast-tracked fingerprint touching a honeytoken is a near-zero-false-positive compromise signal, and revokes fast-track instantly, at machine speed. The design's existing "wild goose chase" instinct turned out to be an established discipline with a mechanism that closed a real hole.</p>
+
+<h3>Per-IP keying died against residential proxies</h3>
+<p>Simulation 8 brute-forced a login endpoint — valid endpoint, valid request shapes, so no-invalid-request never fires. Per-IP rate limiting looked like the answer until the research brief's finding landed: roughly 4 in 10 attacking IPs are now residential or compromised home connections, so 50 attempts from 50 IPs never trips a per-source limit. The resolution: rate-limit <b>per target</b> (the account receiving the attempts) as well as per source, and key evidence multi-dimensionally — source, target, behavioural signature. IP reputation was demoted permanently to context, never verdict. The same simulation also surfaced a coupling requirement: Sentinel cannot see whether a login <em>succeeded</em>, so the application must report auth outcomes back to it — app-coupling working in reverse.</p>
+
+<h3>And one confirmation</h3>
+<p>Simulation 10 — a slow, patient probe from rotating IPs, one unusual request every ten minutes — is the case rate-based detection cannot catch. The allowlist doesn't care: every out-of-profile request is blocked individually, regardless of rate or rotation. The attacker can probe forever and map nothing. The tabletop's one "positive finding": no-invalid-request beats slow distributed probing by construction.</p>
+
+<div class="note"><b>The honest limit, documented.</b> The tabletop also established what Sentinel does <em>not</em> solve: a structurally-valid request with a malicious payload (an in-profile exploit) passes structural validation. The layered answer — CRS-pattern content rules, async LLM interpretation, and an application that must itself be secure — is designed, and the conclusion is stated plainly in the spec: <b>Sentinel is defence in depth, not a sole defence.</b></div>
+
+<h2 id="prior-art">Prior art: positioned, not reinvented</h2>
+<p>A fresh research pass after the tabletop found that the design had independently converged on several established disciplines — reassuring, and useful, because each had lessons to take:</p>
+<div class="tablewrap"><table>
+  <thead><tr><th>Prior art</th><th>What it confirms</th><th>What was taken</th></tr></thead>
+  <tbody>
+    <tr><td><b>OPA / Rego</b></td><td>Tiny core + rules-as-substance; structured decisions beyond allow/deny</td><td>The PDP/PEP split, named explicitly: the rule engine decides, the layers enforce. Rego itself declined (separate language vs. same-code-everywhere)</td></tr>
+    <tr><td><b>Detection-as-Code / Sigma</b></td><td>Rules in git, PR-reviewed, tested against labelled data</td><td>Rule <em>retirement</em> as a discipline the series had missed; the compile-to-backend model as the concrete path to multi-CDN</td></tr>
+    <tr><td><b>OWASP CRS / Coraza</b></td><td>The reference rule library and the modern library-first engine</td><td>Anomaly scoring for combining opinion rules; paranoia levels as progressive lock-down; CRS ingestion as a baseline layer under the app-coupled rules</td></tr>
+    <tr><td><b>Deception technology</b></td><td>"Don't play ball with attackers" is a mature field</td><td>Honeytokens as the intent signal; touch-revokes-trust; deflection as a deliberate deception layer</td></tr>
+    <tr><td><b>Zero-trust / BeyondCorp</b></td><td>Continuous verification over perimeter trust</td><td>The corrected meaning of fast-track: skip identity-establishment cost, never authorisation</td></tr>
+  </tbody>
+</table></div>
+<p>One boundary was drawn deliberately: <b>no malware or file-hash scanning at the Sentinel layers</b> — the zero-knowledge architecture means Sentinel never has file contents, so it does traffic, IP and behavioural intelligence only. Not a limitation to apologise for; a consequence of a core platform value.</p>
+
+<h2 id="observations">Five cross-cutting observations</h2>
+<ul>
+  <li><b>The three graphs are one graph.</b> The evidence graph, the compliance graph and the rule graph share nodes (a rule <em>prevents</em> an attack technique, <em>satisfies</em> a compliance requirement, is <em>observed as</em> evidence). The data model assumes one typed semantic graph from the start.</li>
+  <li><b>Replay-from-S3 is the test corpus.</b> Production traffic in the sink doubles as the regression corpus for new rules — "would this rule have blocked anything legitimate last week?"</li>
+  <li><b>Sentinel guards its own control plane.</b> The admin/API surface sits behind the same rule discipline as everything it protects.</li>
+  <li><b>Rule retirement is real work.</b> The library is living infrastructure, not a trophy cabinet; rules that never fire, or that a control covers better, get retired.</li>
+  <li><b>The fingerprint is the spine</b> of everything deferred — fast-track, trust revocation, evidence keying — which is why it is parked as a first-class object rather than half-built.</li>
+</ul>
+
+<h2 id="method">Why publish the method</h2>
+<p>The gaps were found on paper, not in production — that is the entire value of the exercise, and the reason the intermediate documents are published rather than summarised away. Every claim on this site traces to a brief in <a href="documents/index.html">the documents section</a>, captured verbatim with the raw markdown as the source of truth.</p>
+
+<div class="pagenav">
+  <a href="rules.html">← Rules as data</a>
+  <a href="try-it.html">Try it →</a>
+</div>
+</main>
+
+<footer class="site"><div class="cols">
+  <div>
+    <div class="brandline">sg-sentinel<span>.sgit.ai</span></div>
+    <p>SG/Sentinel — an app-coupled edge security and logging layer: L1 decides and signals, L2 acts and writes, L3 (deferred) thinks. All content CC BY 4.0 unless noted.</p>
+    <p class="verline">site <a href="admin/versions.html">v0.1.0</a> · <a href="admin/index.html">engineering</a></p>
+  </div>
+  <div>
+    <h4>The system</h4>
+    <a href="architecture.html">Architecture</a>
+    <a href="rules.html">Rules as data</a>
+    <a href="try-it.html">Try it</a>
+    <a href="roadmap.html">Roadmap</a>
+  </div>
+  <div>
+    <h4>The record</h4>
+    <a href="research.html">The design method</a>
+    <a href="documents/index.html">Documents</a>
+    <a href="code/index.html">The code</a>
+  </div>
+  <div>
+    <h4>Site</h4>
+    <a href="admin/comms.html">Comms</a>
+    <a href="admin/versions.html">Versions</a>
+    <a href="llms.txt">llms.txt</a>
+    <a href="https://sgit.ai">sgit.ai</a>
+    <a href="https://github.com/SGit-AI/SGit-AI__Website__SG_Sentinel">GitHub</a>
+  </div>
+</div></footer>
+
+</body>
+</html>

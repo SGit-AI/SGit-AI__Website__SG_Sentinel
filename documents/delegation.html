@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SG/Sentinel Delegation And Choke-Points: Designing Code To Run Behind The Gate · documents · sg-sentinel.sgit.ai</title>
+<meta name="description" content="Original document, readable in-page: summary, key concepts and key ideas, then the full markdown. Arch brief, 18 May 2026.">
+<link rel="canonical" href="https://sg-sentinel.sgit.ai/documents/delegation.html">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+
+<nav class="site"><div class="row">
+  <a class="brand" href="../index.html">sg-sentinel<span>.sgit.ai</span></a>
+  <span class="stage-pill">mvp</span>
+  <a class="ver" href="../admin/versions.html" title="Site release history">v0.1.0</a>
+  <a class="nl" href="../architecture.html">Architecture</a>
+  <a class="nl" href="../rules.html">Rules</a>
+  <a class="nl" href="../research.html">Research</a>
+  <a class="nl" href="../try-it.html">Try it</a>
+  <a class="nl" href="../roadmap.html">Roadmap</a>
+  <a class="nl here" href="index.html">Docs</a>
+  <a class="nl" href="../code/index.html">Code</a>
+  <a class="nl" href="../admin/comms.html">Comms</a>
+  <a class="gh" href="https://github.com/SGit-AI/SGit-AI__Website__SG_Sentinel">★ GitHub</a>
+</div></nav>
+
+<main class="doc">
+<div class="crumb"><a href="../index.html">sg-sentinel.sgit.ai</a> / <a href="index.html">documents</a> / delegation</div>
+<h1>SG/Sentinel Delegation And Choke-Points: Designing Code To Run Behind The Gate</h1>
+
+<div class="docmeta">
+  <span class="k">Type</span><span class="v">Arch brief</span>
+  <span class="k">Version</span><span class="v">v0.27.58</span>
+  <span class="k">Date</span><span class="v">18 May 2026</span>
+  <span class="k">Author</span><span class="v">Dinis Cruz (project lead) and collaborators</span>
+  <span class="k">Licence</span><span class="v">CC BY 4.0</span>
+  <span class="k">Source</span><span class="v"><a href="../briefs/v0.27.58__arch-brief__sg-sentinel-delegation-and-choke-points.md">raw markdown</a> · <a href="https://github.com/SGit-AI/SGit-AI__Website__SG_Sentinel/blob/main/briefs/v0.27.58__arch-brief__sg-sentinel-delegation-and-choke-points.md">view on GitHub</a></span>
+</div>
+
+<h2 id="summary">Summary</h2>
+<p>The deeper continuation of the codebase-extension brief: concentrate checks at the choke-points between trust zones instead of validating everywhere defensively; design application code knowing it runs behind Sentinel so it can delegate validation and authorisation to it; and treat any behavioural difference between QA and production as a major bug (deploy parity). The "no 404s at the API layer" signal turns the layered architecture into a self-checking system: an error deep in the stack that the gate should have caught is information about where the security model has a gap.</p>
+
+<h2 id="concepts">Key concepts</h2>
+<ul>
+  <li><a href="../architecture.html#parity"><b>Deploy parity</b></a> — the P1 invariant, realised in the MVP as the parity matrix</li>
+  <li><a href="../architecture.html#correction"><b>Choke-points</b></a> — the checks concentrate where trust zones meet; Sentinel is the outermost</li>
+  <li><a href="../research.html#observations"><b>No 404s at the API layer</b></a> — deep-layer errors as signals of shallow-layer gaps</li>
+</ul>
+
+<h2 id="ideas">Key ideas</h2>
+<ul>
+  <li>Same-code-everywhere is the killer feature: the rule tested locally is byte-for-byte the rule in production, so deployment holds no surprises.</li>
+  <li>Every request becomes a way to make the system better — checks migrate to their correct altitude as errors reveal misplacement.</li>
+  <li>Progressive lock-down: start permissive, observe, tighten to minimal as the valid profile is learned.</li>
+</ul>
+
+<h2 id="on-site">On this site</h2>
+<p>Deploy parity became the parity matrix; the L1 engine being byte-identical across targets is this brief's same-code principle, moved to JS by the CloudFront constraint.</p>
+
+<h2 id="read">Read the document</h2>
+<div class="mdread-label">📄 Original document · v0.27.58 · 18 May 2026 · rendered from the <a href="../briefs/v0.27.58__arch-brief__sg-sentinel-delegation-and-choke-points.md">raw markdown</a> (the source of truth)</div>
+<div class="mdread" id="mdread" data-src="../briefs/v0.27.58__arch-brief__sg-sentinel-delegation-and-choke-points.md"><noscript><p class="dim">In-page rendering needs JavaScript — <a href="../briefs/v0.27.58__arch-brief__sg-sentinel-delegation-and-choke-points.md">open the raw markdown</a>.</p></noscript></div>
+
+<div class="pagenav">
+  <a href="index.html">← All documents</a>
+  <a href="../briefs/v0.27.58__arch-brief__sg-sentinel-delegation-and-choke-points.md">Raw markdown →</a>
+</div>
+</main>
+
+<footer class="site"><div class="cols">
+  <div>
+    <div class="brandline">sg-sentinel<span>.sgit.ai</span></div>
+    <p>SG/Sentinel — an app-coupled edge security and logging layer: L1 decides and signals, L2 acts and writes, L3 (deferred) thinks. All content CC BY 4.0 unless noted.</p>
+    <p class="verline">site <a href="../admin/versions.html">v0.1.0</a> · <a href="../admin/index.html">engineering</a></p>
+  </div>
+  <div>
+    <h4>The system</h4>
+    <a href="../architecture.html">Architecture</a>
+    <a href="../rules.html">Rules as data</a>
+    <a href="../try-it.html">Try it</a>
+    <a href="../roadmap.html">Roadmap</a>
+  </div>
+  <div>
+    <h4>The record</h4>
+    <a href="../research.html">The design method</a>
+    <a href="index.html">Documents</a>
+    <a href="../code/index.html">The code</a>
+  </div>
+  <div>
+    <h4>Site</h4>
+    <a href="../admin/comms.html">Comms</a>
+    <a href="../admin/versions.html">Versions</a>
+    <a href="../llms.txt">llms.txt</a>
+    <a href="https://sgit.ai">sgit.ai</a>
+    <a href="https://github.com/SGit-AI/SGit-AI__Website__SG_Sentinel">GitHub</a>
+  </div>
+</div></footer>
+
+<script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
+<script src="../assets/mdreader.js"></script>
+</body>
+</html>

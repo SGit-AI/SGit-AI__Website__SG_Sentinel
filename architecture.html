@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Architecture — the layer model, the signal spine, the three targets · sg-sentinel.sgit.ai</title>
+<meta name="description" content="SG/Sentinel's architecture: Layer 1 decides and signals (CloudFront Function, no I/O), Layer 2 acts and writes (Lambda@Edge, sole actor), Schema__Sentinel__Signal as the byte-identical parity spine, and three execution targets — local Node, local Docker, live AWS.">
+<link rel="canonical" href="https://sg-sentinel.sgit.ai/architecture.html">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+
+<nav class="site"><div class="row">
+  <a class="brand" href="index.html">sg-sentinel<span>.sgit.ai</span></a>
+  <span class="stage-pill">mvp</span>
+  <a class="ver" href="admin/versions.html" title="Site release history">v0.1.0</a>
+  <a class="nl here" href="architecture.html">Architecture</a>
+  <a class="nl" href="rules.html">Rules</a>
+  <a class="nl" href="research.html">Research</a>
+  <a class="nl" href="try-it.html">Try it</a>
+  <a class="nl" href="roadmap.html">Roadmap</a>
+  <a class="nl" href="documents/index.html">Docs</a>
+  <a class="nl" href="code/index.html">Code</a>
+  <a class="nl" href="admin/comms.html">Comms</a>
+  <a class="gh" href="https://github.com/SGit-AI/SGit-AI__Website__SG_Sentinel">★ GitHub</a>
+</div></nav>
+
+<main class="doc">
+<div class="crumb"><a href="index.html">sg-sentinel.sgit.ai</a> / architecture</div>
+<h1>The layer model, the signal spine, and the three targets</h1>
+<p class="lead">One governing correction shaped the whole MVP: <b>Layer 1 never acts and never writes — it only decides and signals. Layer 2 is the sole actor and the sole I/O owner.</b> Everything on this page follows from that sentence.</p>
+
+<h2 id="correction">Why the correction is load-bearing</h2>
+<p>A CloudFront Function has no network and no filesystem. It physically cannot write to S3 — and by design it must not enforce either. So L1's entire job is: assign a request ID, evaluate the deterministic rules, and emit a structured <b>signal</b> downstream. Blocking, deflecting and logging are <em>actions</em>; actions belong to the layer that can perform I/O. L1 can only <em>recommend</em> a block; L2 performs it.</p>
+<p>This collapses the architecture to one actor and removes a category error from the earlier design (where L1 "blocked" inline). Both use cases flow through one path:</p>
+<div class="tablewrap"><table>
+  <thead><tr><th>Use case</th><th>L1</th><th>L2</th></tr></thead>
+  <tbody>
+    <tr><td><b>Logging</b> (real-time visibility)</td><td>signals <code>allow</code></td><td>writes the log record to the sink</td></tr>
+    <tr><td><b>Blocking</b> (obvious-bad)</td><td>signals <code>block</code> + reason + rule + action</td><td>writes the log record <em>and</em> enforces (403/404 instead of forwarding)</td></tr>
+  </tbody>
+</table></div>
+<p>There is no special-casing: a block is simply a logged action with an enforcement side-effect. And because L2 is a <em>dumb actor</em> in the tiny core — it enforces and writes, it never re-evaluates rules — there is no cross-language rule duplication. Rules live in JS only. Parity is about the signal envelope, not about re-running rule logic in two languages.</p>
+
+<h2 id="signal">The signal spine: <code>Schema__Sentinel__Signal</code></h2>
+<p>The signal envelope is the deploy-parity spine — the one contract that is byte-identical across all three targets. L1 emits it; L2 consumes it; the three-target acceptance test asserts on it. The Python schema, verbatim from the codebase:</p>
+<pre class="shell"><span class="d"># sentinel/schemas/Schema__Sentinel__Signal.py — THE parity spine. L1 (JS) emits this
+# exact shape (snake_case keys); L2 (Python) deserialises + validates it before acting.</span>
+<span class="cy">class</span> Schema__Sentinel__Signal(Type_Safe):
+    request_id      : Safe_Str__Sentinel__Request_Id
+    aws_request_id  : Safe_Str
+    captured        : Schema__Sentinel__Captured
+    verdict         : Enum__Sentinel__Verdict     = Enum__Sentinel__Verdict.ALLOW
+    reason          : Safe_Str__Sentinel__Reason
+    rule_id         : Safe_Str__Sentinel__Rule_Id
+    action          : Enum__Sentinel__Action      = Enum__Sentinel__Action.PASS
+    layer           : Enum__Sentinel__Layer       = Enum__Sentinel__Layer.L1
+    engine_version  : Safe_Str__Sentinel__Version
+    ruleset_version : Safe_Str__Sentinel__Version</pre>
+<p><b>Transport differs per target; the schema does not.</b> On AWS the envelope rides as a request header — <code>x-sentinel-signal</code>, carrying raw compact JSON (CloudFront Functions have no <code>Buffer</code>/<code>btoa</code>, and JSON contains no CR/LF, so it is a valid header value). Locally it is passed in-process from the L1 harness to the L2 module. Either way L2 deserialises into the same Type_Safe object and validates it by construction before acting.</p>
+
+<h2 id="l1">Layer 1: the engine, in full</h2>
+<p>The L1 engine is a single dependency-free file, CloudFront Functions 2.0-compatible, runnable under plain Node — the same bytes run on CloudFront (via <code>handler</code>), under Node (a guarded tail), and inside the Docker CF-env simulation. This is the complete decision-and-signal path, verbatim from <a href="code/sentinel/runtime/layer1/sentinel_l1.js"><code>sentinel_l1.js</code></a>:</p>
+<pre class="shell"><span class="cy">function</span> evaluate(c) {                       <span class="d">// c = captured request object (snake_case)</span>
+  <span class="cy">var</span> hit =
+        rule_0007_malformed(c)        ||
+        rule_0003_banned_ip(c)        ||
+        rule_0012_path_never_valid(c) ||
+        rule_0014_hidden_file(c)      ||
+        rule_0018_wp_scan(c)          ||
+        { verdict: <span class="g">'allow'</span>, reason: <span class="g">'no rule matched'</span>, rule_id: <span class="g">'0001'</span>, action: <span class="g">'pass'</span> };
+  <span class="cy">return</span> {
+    request_id: c.request_id, aws_request_id: c.aws_request_id || <span class="g">''</span>,
+    captured: c, verdict: hit.verdict, reason: hit.reason,
+    rule_id: hit.rule_id, action: hit.action, layer: <span class="g">'L1'</span>,
+    engine_version: ENGINE_VERSION, ruleset_version: RULESET_VERSION
+  };
+}
+
+<span class="cy">function</span> handler(event) {                     <span class="d">// CloudFront Functions entry (viewer-request)</span>
+  <span class="d">// ... build the captured object from event.request ...</span>
+  r.headers[<span class="g">'x-sentinel-signal'</span>] = { value: JSON.stringify(evaluate(c)) };
+  <span class="cy">return</span> r;                                   <span class="d">// ALWAYS return the request; L1 never acts</span>
+}</pre>
+<p>The engine runs the rules in order; first block wins; otherwise <code>allow</code>. The empty <code>BANNED_IPS</code> array in the file is an inlining marker — the deployer (for CloudFront) and the local harness (for node/docker) replace it with the list from <a href="code/sentinel/runtime/layer1/rules.embedded.json"><code>rules.embedded.json</code></a> before use, so the file stays the single source.</p>
+
+<h2 id="l2">Layer 2: the sole actor</h2>
+<p>The L2 actor is identical logic everywhere; only two injected dependencies swap — the signal transport adapter (header on AWS, in-process locally) and the log sink (S3 on AWS, local FS or in-memory locally). Its whole job, verbatim from <a href="code/sentinel/runtime/layer2/Sentinel__L2__Actor.py"><code>Sentinel__L2__Actor.py</code></a>:</p>
+<pre class="shell"><span class="cy">class</span> Sentinel__L2__Actor(Type_Safe):
+    log_sink     : Log__Sink
+    privacy_mode : Safe_Str = Safe_Str(<span class="g">'hash'</span>)                    <span class="d"># 'hash' (default) | 'plain' | 'omit'</span>
+
+    <span class="cy">def</span> handle(self, signal : Schema__Sentinel__Signal,
+                     target : Enum__Sentinel__Target) -&gt; Schema__Sentinel__Enforcement:
+        enforcement = self.enforce(signal)
+        record      = self.build_record(signal, target, enforcement)
+        self.log_sink.write(record)                               <span class="d"># L2 is the sole I/O owner</span>
+        <span class="cy">return</span> enforcement
+
+    <span class="cy">def</span> enforce(self, signal: Schema__Sentinel__Signal) -&gt; Schema__Sentinel__Enforcement:
+        <span class="cy">if</span> signal.verdict == Enum__Sentinel__Verdict.BLOCK:
+            <span class="cy">if</span> signal.action == Enum__Sentinel__Action.DEFLECT_404:
+                <span class="cy">return</span> Schema__Sentinel__Enforcement(pass_to_origin=<span class="y">False</span>, http_status=<span class="y">404</span>)
+            <span class="cy">return</span>     Schema__Sentinel__Enforcement(pass_to_origin=<span class="y">False</span>, http_status=<span class="y">403</span>)
+        <span class="cy">return</span>         Schema__Sentinel__Enforcement(pass_to_origin=<span class="y">True</span>,  http_status=<span class="y">0</span>)</pre>
+<p>The log record lands in the sink under the same key layout everywhere — <code>&lt;prefix&gt;/YYYY/MM/DD/HH/&lt;request_id&gt;.json</code>, one object per record — so <code>trace</code> and replay behave identically local and on AWS. Source IPs are hashed by default (privacy mode); the record is replayable, carrying enough fidelity to re-run rules against it later.</p>
+
+<h2 id="targets">The three targets: same engine, swapped transport and sink</h2>
+<div class="diagram" style="padding:0">
+  <div class="scroll"><svg viewBox="0 0 1040 330" role="img" aria-label="The three execution targets. Target A, live AWS: CloudFront Function on viewer-request, signal travels as the x-sentinel-signal header to Lambda at Edge on origin-request, which writes to an S3 bucket. Target B, local direct: the same JS engine invoked via node, signal passed in-process to the same Python actor, writing to a local filesystem sink. Target C, local Docker: the same JS engine behind an HTTP listener in a CloudFront-environment simulation container, same Python actor, local sink. Only the transport and the sink differ.">
+    <defs>
+      <marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#5c5f66"/></marker>
+    </defs>
+    <!-- column headers -->
+    <text x="30"  y="40" class="lbl" style="font-size:14px">A · live AWS</text>
+    <text x="30"  y="60" class="sub2">ephemeral distribution, cache-disabled</text>
+    <text x="30"  y="130" class="mono">CloudFront Function (L1)</text>
+    <text x="30"  y="150" class="mono-dim">viewer-request</text>
+    <text x="30"  y="200" class="mono">Lambda@Edge (L2)</text>
+    <text x="30"  y="220" class="mono-dim">origin-request · every hit (TTL 0)</text>
+    <text x="30"  y="270" class="mono">S3 bucket</text>
+    <rect x="20" y="105" width="300" height="190" rx="10" fill="none" stroke="#d5d0c2" stroke-width="1.25"/>
+    <path d="M160 158 V182" stroke="#5c5f66" stroke-width="1.5" fill="none" marker-end="url(#arr2)"/>
+    <path d="M160 228 V252" stroke="#5c5f66" stroke-width="1.5" fill="none" marker-end="url(#arr2)"/>
+    <text x="175" y="175" class="mono-dim">x-sentinel-signal hdr</text>
+
+    <text x="380" y="40" class="lbl" style="font-size:14px">B · local-direct</text>
+    <text x="380" y="60" class="sub2">fully offline, zero AWS</text>
+    <text x="380" y="130" class="mono">node sentinel_l1.js (L1)</text>
+    <text x="380" y="150" class="mono-dim">same file, guarded tail</text>
+    <text x="380" y="200" class="mono">Sentinel__L2__Actor (L2)</text>
+    <text x="380" y="220" class="mono-dim">same Python module</text>
+    <text x="380" y="270" class="mono">local-FS sink</text>
+    <rect x="370" y="105" width="300" height="190" rx="10" fill="none" stroke="#d5d0c2" stroke-width="1.25"/>
+    <path d="M510 158 V182" stroke="#5c5f66" stroke-width="1.5" fill="none" marker-end="url(#arr2)"/>
+    <path d="M510 228 V252" stroke="#5c5f66" stroke-width="1.5" fill="none" marker-end="url(#arr2)"/>
+    <text x="525" y="175" class="mono-dim">in-process</text>
+
+    <text x="730" y="40" class="lbl" style="font-size:14px">C · local-docker</text>
+    <text x="730" y="60" class="sub2">CF-environment simulation</text>
+    <text x="730" y="130" class="mono">HTTP listener → node L1</text>
+    <text x="730" y="150" class="mono-dim">same file, CF-like runtime</text>
+    <text x="730" y="200" class="mono">Sentinel__L2__Actor (L2)</text>
+    <text x="730" y="220" class="mono-dim">same Python module</text>
+    <text x="730" y="270" class="mono">local-FS sink</text>
+    <rect x="720" y="105" width="300" height="190" rx="10" fill="none" stroke="#d5d0c2" stroke-width="1.25"/>
+    <path d="M860 158 V182" stroke="#5c5f66" stroke-width="1.5" fill="none" marker-end="url(#arr2)"/>
+    <path d="M860 228 V252" stroke="#5c5f66" stroke-width="1.5" fill="none" marker-end="url(#arr2)"/>
+    <text x="875" y="175" class="mono-dim">signal over HTTP</text>
+  </svg></div>
+  <p class="cap">Same L1 bytes, same L2 logic. Only the signal transport and the log sink swap. The parity matrix drives the same canonical request set through every available target and asserts identical signals, records, and enforcement.</p>
+</div>
+
+<h3 id="target-a">Target A specifics — the live AWS path</h3>
+<p>CloudFront association rules permit a CloudFront Function on viewer-request and a Lambda@Edge on origin-request. Lambda@Edge on origin-request runs <em>only on cache miss</em>, so to make "log every hit + enforce every hit" literally true, the ephemeral test distribution runs <b>cache-disabled (TTL 0)</b>: every request is a cache miss, so every request reaches L2 and is logged and enforceable. Cache-hit logging (which needs a viewer-response path) is a known, explicitly deferred gap — obvious-bad paths are never legitimately cached anyway, so blocking is unaffected.</p>
+<p>The gotchas the deployer handles — recorded because each one bites:</p>
+<ul>
+  <li><b>CloudFront Functions:</b> no <code>require</code>, <code>module</code>, <code>Buffer</code>, <code>btoa</code>, or top-level <code>process</code>; ES5.1-ish. The engine file is written to that intersection.</li>
+  <li><b>Lambda@Edge:</b> no environment variables — the deployer templates a generated <code>_sentinel_config.py</code> into the zip; must be authored in <b>us-east-1</b>; deployed as a numbered version, never <code>$LATEST</code>; the execution role must be trusted by both <code>lambda.amazonaws.com</code> and <code>edgelambda.amazonaws.com</code>.</li>
+  <li><b>Teardown:</b> Lambda@Edge replicas delete asynchronously — teardown polls until they are gone, then removes the function, the distribution (disable → wait → delete), and empties and deletes the bucket. No orphans.</li>
+</ul>
+
+<h2 id="placement">Where it lives: <code>sg sentinel</code>, a top-level peer surface</h2>
+<p>Sentinel lands in the existing <code>sg</code> CLI as a top-level product surface — <code>sg sentinel</code>, alias <code>sn</code> — beside <code>sg edge</code>, not inside it. SG/Edge runs workloads; SG/Sentinel guards what sits in front of them: distinct names, distinct roles, related infrastructure. Sentinel composes the existing <code>sg aws</code> primitives rather than opening its own AWS seams:</p>
+<pre class="shell">sg sentinel  <span class="d">(product surface; this MVP)</span>
+   │ <span class="d">consumes as libraries</span>
+   ├── sg aws cf      <span class="d">→ CloudFront clients + function publish</span>
+   ├── sg aws lambda  <span class="d">→ Lambda deployer (L@E packaging)</span>
+   ├── sg aws s3      <span class="d">→ the log sink on AWS</span>
+   ├── sg aws logs    <span class="d">→ function/edge log inspection</span>
+   └── _shared        <span class="d">→ auth, mutation gate, tagging, region, confirm, banner</span></pre>
+<p>House rules inherited from the codebase, non-negotiable: Type_Safe schemas everywhere (no Pydantic, no raw dicts as contracts); one boto3 seam per client, overridden in tests by dict-backed in-memory doubles (no mocks, no patches, no network in unit tests); mutating deploys gated by <code>SG_AWS__SENTINEL__ALLOW_MUTATIONS=1</code> plus explicit confirmation.</p>
+
+<h2 id="parity">The parity matrix is the definition of done</h2>
+<p>The same canonical request set — a benign <code>GET /index.html</code>, <code>/etc/passwd</code>, <code>/wp-login.php</code>, <code>/.env</code>, a banned-IP request, a malformed request — is driven through every available target and asserted to produce identical signals, identical log records, and identical enforcement decisions. Local-direct is the always-available baseline; docker and AWS legs are integration-tier and skip cleanly when unavailable. Non-deterministic fields (timestamps, AWS request IDs) are normalised before comparison; the <em>rule decision</em> is what must match. Any divergence between targets is a parity bug and a P1.</p>
+<div class="note"><b>Where to read more.</b> The full architecture is in the <a href="documents/mvp-architecture.html">v0.27.59 MVP architecture brief</a> and the file-by-file <a href="documents/mvp-implementation.html">v0.27.60 dev brief</a>; the layer model's design history is in the <a href="documents/execution-model.html">execution-model brief</a> and the <a href="documents/behavioural-spec.html">rules-of-the-game behavioural spec</a>.</div>
+
+<div class="pagenav">
+  <a href="index.html">← Home</a>
+  <a href="rules.html">Rules as data →</a>
+</div>
+</main>
+
+<footer class="site"><div class="cols">
+  <div>
+    <div class="brandline">sg-sentinel<span>.sgit.ai</span></div>
+    <p>SG/Sentinel — an app-coupled edge security and logging layer: L1 decides and signals, L2 acts and writes, L3 (deferred) thinks. All content CC BY 4.0 unless noted.</p>
+    <p class="verline">site <a href="admin/versions.html">v0.1.0</a> · <a href="admin/index.html">engineering</a></p>
+  </div>
+  <div>
+    <h4>The system</h4>
+    <a href="architecture.html">Architecture</a>
+    <a href="rules.html">Rules as data</a>
+    <a href="try-it.html">Try it</a>
+    <a href="roadmap.html">Roadmap</a>
+  </div>
+  <div>
+    <h4>The record</h4>
+    <a href="research.html">The design method</a>
+    <a href="documents/index.html">Documents</a>
+    <a href="code/index.html">The code</a>
+  </div>
+  <div>
+    <h4>Site</h4>
+    <a href="admin/comms.html">Comms</a>
+    <a href="admin/versions.html">Versions</a>
+    <a href="llms.txt">llms.txt</a>
+    <a href="https://sgit.ai">sgit.ai</a>
+    <a href="https://github.com/SGit-AI/SGit-AI__Website__SG_Sentinel">GitHub</a>
+  </div>
+</div></footer>
+
+</body>
+</html>

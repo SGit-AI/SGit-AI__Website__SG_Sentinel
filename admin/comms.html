@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Comms — tasks, requests, decisions · sg-sentinel.sgit.ai</title>
+<meta name="description" content="The working channel for sg-sentinel.sgit.ai: open tasks, requests to the project lead, and decisions taken while building the site.">
+<link rel="canonical" href="https://sg-sentinel.sgit.ai/admin/comms.html">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+
+<nav class="site"><div class="row">
+  <a class="brand" href="../index.html">sg-sentinel<span>.sgit.ai</span></a>
+  <span class="stage-pill">mvp</span>
+  <a class="ver" href="versions.html" title="Site release history">v0.1.0</a>
+  <a class="nl" href="../architecture.html">Architecture</a>
+  <a class="nl" href="../rules.html">Rules</a>
+  <a class="nl" href="../research.html">Research</a>
+  <a class="nl" href="../try-it.html">Try it</a>
+  <a class="nl" href="../roadmap.html">Roadmap</a>
+  <a class="nl" href="../documents/index.html">Docs</a>
+  <a class="nl" href="../code/index.html">Code</a>
+  <a class="nl here" href="comms.html">Comms</a>
+  <a class="gh" href="https://github.com/SGit-AI/SGit-AI__Website__SG_Sentinel">★ GitHub</a>
+</div></nav>
+
+<main class="doc">
+<div class="crumb"><a href="../index.html">sg-sentinel.sgit.ai</a> / admin / comms</div>
+<h1>Comms: tasks, requests, decisions</h1>
+<p class="lead">The working channel between the site agent and the project lead — what is open, what is needed from whom, and the decisions already taken. Updated with every release.</p>
+
+<h2 id="needs">Needs from the project lead</h2>
+<div class="tablewrap"><table>
+  <thead><tr><th>#</th><th>Status</th><th>Item</th></tr></thead>
+  <tbody>
+    <tr><td>N1</td><td><span class="tstat t-need">needed</span></td><td><b>Go live.</b> Merge the site branch, allow <code>dev</code> in the repo's <code>github-pages</code> environment (Settings → Environments), and confirm Pages serves from Actions. A one-off push to <code>main</code> works as a deploy test in the meantime — same fallback nhi.sgit.ai used.</td></tr>
+    <tr><td>N2</td><td><span class="tstat t-need">needed</span></td><td><b>DNS.</b> Point <code>sg-sentinel.sgit.ai</code> (CNAME) at <code>sgit-ai.github.io</code>; the repo's <code>CNAME</code> file is already in place. Until then the github.io URL serves the site.</td></tr>
+    <tr><td>N3</td><td><span class="tstat t-open">open</span></td><td><b>Confirm the code-snapshot licence.</b> The site states "code under the repository licence" (Apache-2.0, per <code>LICENSE</code>); confirm that is the intended licence for the <code>code/sentinel/</code> snapshot.</td></tr>
+  </tbody>
+</table></div>
+
+<h2 id="tasks">Site tasks</h2>
+<div class="tablewrap"><table>
+  <thead><tr><th>#</th><th>Status</th><th>Task</th></tr></thead>
+  <tbody>
+    <tr><td>T1</td><td><span class="tstat t-done">done</span></td><td>v0.1.0: the six narrative pages, the 23-document reader section, the code snapshot with reading guide, the validate gate, the CI pipeline, versioning, llms.txt, sitemap.</td></tr>
+    <tr><td>T2</td><td><span class="tstat t-open">open</span></td><td><b>Update the site when the live AWS leg runs.</b> The moment the parity matrix's AWS leg and the live smoke test have been executed against a real CloudFront distribution, the status language on the front page, try-it and roadmap changes from "code-complete, not yet run live" to measured results. This is the single most important future edit; it depends on the sentinel MVP team, not the site.</td></tr>
+    <tr><td>T3</td><td><span class="tstat t-open">open</span></td><td>Add the measured cost comparison (Sentinel live path vs Firehose + WAF baseline) when it exists — the founding argument's loop-closer. No numbers before then.</td></tr>
+    <tr><td>T4</td><td><span class="tstat t-open">open</span></td><td>Refresh the code snapshot and testing manual when the sentinel package moves past the packet's 23 May state, keeping the "captured at" provenance line accurate.</td></tr>
+  </tbody>
+</table></div>
+
+<h2 id="decisions">Decisions taken while building</h2>
+<ul>
+  <li><b>Light theme, not dark.</b> The website brief suggested a near-dark theme; the commissioning instruction was to match the sgit.ai / nhi.sgit.ai design language, which is the cream-light theme with dark terminal blocks for code. The instruction wins; the terminal blocks keep the code-adjacent material dark and high-contrast.</li>
+  <li><b>All 23 documents captured, not six pages of synthesis alone.</b> The narrative pages synthesise (per the brief's "don't paste 3,000 words"); the documents section carries the full corpus verbatim with reader pages, following the nhi.sgit.ai raw-plus-curated pattern.</li>
+  <li><b>The code snapshot ships in the repo.</b> 556&nbsp;KB buys verifiable provenance: every excerpt on the site can be diffed against <code>code/sentinel/</code>.</li>
+  <li><b>Status language is fixed at the packet's precision.</b> "149 unit tests passing", "code-complete and unit-tested via in-memory doubles, not yet run against a real CloudFront distribution" — verbatim discipline, enforced by review rather than tooling.</li>
+  <li><b>The TUI/chat/traffic surfaces are presented as built</b>, on the authority of the testing manual (23 May), which post-dates the dev brief that had deferred the TUI.</li>
+</ul>
+
+<div class="pagenav">
+  <a href="index.html">← Engineering</a>
+  <a href="versions.html">Release history →</a>
+</div>
+</main>
+
+<footer class="site"><div class="cols">
+  <div>
+    <div class="brandline">sg-sentinel<span>.sgit.ai</span></div>
+    <p>SG/Sentinel — an app-coupled edge security and logging layer: L1 decides and signals, L2 acts and writes, L3 (deferred) thinks. All content CC BY 4.0 unless noted.</p>
+    <p class="verline">site <a href="versions.html">v0.1.0</a> · <a href="index.html">engineering</a></p>
+  </div>
+  <div>
+    <h4>The system</h4>
+    <a href="../architecture.html">Architecture</a>
+    <a href="../rules.html">Rules as data</a>
+    <a href="../try-it.html">Try it</a>
+    <a href="../roadmap.html">Roadmap</a>
+  </div>
+  <div>
+    <h4>The record</h4>
+    <a href="../research.html">The design method</a>
+    <a href="../documents/index.html">Documents</a>
+    <a href="../code/index.html">The code</a>
+  </div>
+  <div>
+    <h4>Site</h4>
+    <a href="comms.html">Comms</a>
+    <a href="versions.html">Versions</a>
+    <a href="../llms.txt">llms.txt</a>
+    <a href="https://sgit.ai">sgit.ai</a>
+    <a href="https://github.com/SGit-AI/SGit-AI__Website__SG_Sentinel">GitHub</a>
+  </div>
+</div></footer>
+
+</body>
+</html>

@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://sg-sentinel.sgit.ai/sitemap.xml

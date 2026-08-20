@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Rules as data — the tiny core's six rules and where the graph goes · sg-sentinel.sgit.ai</title>
+<meta name="description" content="In SG/Sentinel, rules are the engine: the MVP ships six deterministic rules as pure functions with metadata (attack technique, confidence, action), first-block-wins ordering, and a designed-but-deferred fractal rule graph.">
+<link rel="canonical" href="https://sg-sentinel.sgit.ai/rules.html">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+
+<nav class="site"><div class="row">
+  <a class="brand" href="index.html">sg-sentinel<span>.sgit.ai</span></a>
+  <span class="stage-pill">mvp</span>
+  <a class="ver" href="admin/versions.html" title="Site release history">v0.1.0</a>
+  <a class="nl" href="architecture.html">Architecture</a>
+  <a class="nl here" href="rules.html">Rules</a>
+  <a class="nl" href="research.html">Research</a>
+  <a class="nl" href="try-it.html">Try it</a>
+  <a class="nl" href="roadmap.html">Roadmap</a>
+  <a class="nl" href="documents/index.html">Docs</a>
+  <a class="nl" href="code/index.html">Code</a>
+  <a class="nl" href="admin/comms.html">Comms</a>
+  <a class="gh" href="https://github.com/SGit-AI/SGit-AI__Website__SG_Sentinel">★ GitHub</a>
+</div></nav>
+
+<main class="doc">
+<div class="crumb"><a href="index.html">sg-sentinel.sgit.ai</a> / rules</div>
+<h1>Rules are the engine</h1>
+<p class="lead">The design series' central inversion: rules are not configuration on top of a fixed engine — <b>rules are the engine</b>. The core is a small, stable machine for executing them; every block, every allow, every log action is a rule. The MVP ships a deliberately tiny core: six deterministic rules, all <code>deterministic-certain</code>, all at Layer 1.</p>
+
+<h2 id="six">The six rules of the tiny core</h2>
+<div class="tablewrap"><table>
+  <thead><tr><th>Rule</th><th>Name</th><th>Catches</th><th>ATT&amp;CK</th><th>Action</th></tr></thead>
+  <tbody>
+    <tr><td><code>0001</code></td><td>capture-all</td><td>every request — assembles the log fields; pure observation, and the <code>allow</code> fallthrough</td><td>—</td><td><code>pass</code></td></tr>
+    <tr><td><code>0003</code></td><td>banned-ip</td><td>source IP in the embedded list (the canonical embedded-data example)</td><td><code>T1595</code></td><td><code>drop_403</code></td></tr>
+    <tr><td><code>0007</code></td><td>malformed-request</td><td>structurally invalid request (no method, no path, path not starting <code>/</code>)</td><td><code>T1190</code></td><td><code>drop_403</code></td></tr>
+    <tr><td><code>0012</code></td><td>path-never-valid</td><td><code>/etc/passwd</code> and path traversal (<code>..</code>)</td><td><code>T1190</code></td><td><code>drop_403</code></td></tr>
+    <tr><td><code>0014</code></td><td>hidden-file-probe</td><td><code>/.env</code>, <code>/.git/…</code></td><td><code>T1083</code></td><td><code>deflect_404</code></td></tr>
+    <tr><td><code>0018</code></td><td>wp-scan-on-static</td><td><code>/wp-login.php</code>, <code>/wp-admin/…</code>, <code>/xmlrpc.php</code> on a static site</td><td><code>T1595</code></td><td><code>deflect_404</code></td></tr>
+  </tbody>
+</table></div>
+<p>Each rule is a pure function <code>(captured) → {verdict, reason, rule_id, action} | null</code>. The engine runs them in order; <b>first block wins</b>; otherwise <code>allow</code>. Every one of them, verbatim from the deployed engine:</p>
+<pre class="shell"><span class="cy">function</span> rule_0007_malformed(c){ <span class="cy">if</span>(!c.method||!c.path||c.path.charAt(0)!==<span class="g">'/'</span>) <span class="cy">return</span> {verdict:<span class="g">'block'</span>,reason:<span class="g">'malformed request'</span>,rule_id:<span class="g">'0007'</span>,action:<span class="g">'drop_403'</span>}; }
+<span class="cy">function</span> rule_0003_banned_ip(c){ <span class="cy">if</span>(BANNED_IPS.indexOf(c.source_ip)&gt;=0) <span class="cy">return</span> {verdict:<span class="g">'block'</span>,reason:<span class="g">'banned ip'</span>,rule_id:<span class="g">'0003'</span>,action:<span class="g">'drop_403'</span>}; }
+<span class="cy">function</span> rule_0012_path_never_valid(c){ <span class="cy">var</span> p=c.path.toLowerCase(); <span class="cy">if</span>(p.indexOf(<span class="g">'/etc/passwd'</span>)&gt;=0||p.indexOf(<span class="g">'..'</span>)&gt;=0) <span class="cy">return</span> {verdict:<span class="g">'block'</span>,reason:<span class="g">'path never valid'</span>,rule_id:<span class="g">'0012'</span>,action:<span class="g">'drop_403'</span>}; }
+<span class="cy">function</span> rule_0014_hidden_file(c){ <span class="cy">if</span>(/^\/\.(env|git)(\/|$)/.test(c.path)) <span class="cy">return</span> {verdict:<span class="g">'block'</span>,reason:<span class="g">'hidden file probe'</span>,rule_id:<span class="g">'0014'</span>,action:<span class="g">'deflect_404'</span>}; }
+<span class="cy">function</span> rule_0018_wp_scan(c){ <span class="cy">var</span> p=c.path.toLowerCase(); <span class="cy">if</span>(p===<span class="g">'/wp-login.php'</span>||p===<span class="g">'/xmlrpc.php'</span>||p.indexOf(<span class="g">'/wp-admin'</span>)===0) <span class="cy">return</span> {verdict:<span class="g">'block'</span>,reason:<span class="g">'wordpress scan on static site'</span>,rule_id:<span class="g">'0018'</span>,action:<span class="g">'deflect_404'</span>}; }</pre>
+<p>That is the entire security logic of the MVP, readable in five lines-per-rule. Smallness is the point: the tiny core proves the spine — engine, signal, actor, sink, parity — on rules whose correctness is obvious, before any clever rule is added.</p>
+
+<h2 id="data">Rules are data: metadata from day one</h2>
+<p>The rule <em>logic</em> lives in the JS engine; the rule <em>metadata</em> lives in a Python registry (<a href="code/sentinel/rules/Sentinel__Rule__Registry.py"><code>Sentinel__Rule__Registry.py</code></a>) that backs <code>sg sentinel rules list/show</code>. Each entry carries the schema the design series specified — present from day one even though the MVP engine is a flat ordered list:</p>
+<div class="tablewrap"><table>
+  <thead><tr><th>Field</th><th>Purpose</th><th>Example</th></tr></thead>
+  <tbody>
+    <tr><td><code>rule_id</code></td><td>stable identity, traceable in every signal and log record</td><td><code>0012</code></td></tr>
+    <tr><td><code>layer</code></td><td>the altitude the rule runs at</td><td><code>L1</code></td></tr>
+    <tr><td><code>attack_tag</code></td><td>MITRE ATT&amp;CK technique the rule defends against</td><td><code>T1190</code></td></tr>
+    <tr><td><code>confidence</code></td><td>where on the deterministic-to-opinion spectrum</td><td><code>deterministic-certain</code></td></tr>
+    <tr><td><code>action</code></td><td>the HTTP-level block action</td><td><code>drop_403</code> · <code>deflect_404</code></td></tr>
+  </tbody>
+</table></div>
+<p>Actions are defined at the HTTP level because the tabletop demanded it (GAP 6.1 — "drop silently" is not a thing HTTP can do): <code>drop_403</code> returns an empty 403; <code>deflect_404</code> pretends the path does not exist; wild-goose-chase / tarpit responses are a designed, deferred deception action.</p>
+
+<h2 id="graph">Where this goes: the fractal rule graph</h2>
+<p>The design series is explicit that a flat list does not scale — every request would pay for every rule. The designed structure is a <b>fractal graph</b>: rules within rule sets, rule packs that activate only when a triggering rule fires, rules that select which rules run next. The cost of a request becomes proportional to the rules it actually traverses, not the total rule count. Rules carry rich metadata — semantic-graph position, compliance-standard mapping, attack-tree mapping, next-rule connections — so one rule is a node in several graphs at once.</p>
+<p>Alongside the graph, the series specifies (all deferred from this MVP, all documented in the briefs):</p>
+<ul>
+  <li><b>The deterministic-to-opinion spectrum</b> — opinion rules carry confidence and combine through CRS-style anomaly scoring rather than binary verdicts.</li>
+  <li><b>Rules-as-vault</b> — every rule version-controlled (RFD-style versioning), the active rule-set a manifest of pinned versions, the production bundle containing only the rules production runs.</li>
+  <li><b>Dangerous dev-only rules</b> — e.g. a rule that enables/disables other rules for differential testing; phase-gated so they exist in dev and are excluded from production bundles by construction.</li>
+  <li><b>LLMs as rule authors, never inline</b> — heavy LLM use to build, test and threat-model rules at development time; in production, no LLM ever runs in the request path.</li>
+  <li><b>Replay-from-S3</b> — production traffic in the sink is the regression corpus: before deploying a new rule, replay it against last week's real traffic and ask "would this have blocked anything legitimate?" The log record schema is designed replayable for exactly this.</li>
+</ul>
+<div class="note"><b>Sources.</b> The rules-are-everything thesis is the <a href="documents/rules-engine.html">rules-engine brief</a>; the graph structure, metadata and confidence spectrum are the <a href="documents/rule-architecture.html">rule-architecture strategy</a>; the CRS/Sigma/OPA positioning is the <a href="documents/research-standards.html">research brief</a> and the <a href="documents/addendum.html">addendum</a>.</div>
+
+<div class="pagenav">
+  <a href="architecture.html">← Architecture</a>
+  <a href="research.html">The design method →</a>
+</div>
+</main>
+
+<footer class="site"><div class="cols">
+  <div>
+    <div class="brandline">sg-sentinel<span>.sgit.ai</span></div>
+    <p>SG/Sentinel — an app-coupled edge security and logging layer: L1 decides and signals, L2 acts and writes, L3 (deferred) thinks. All content CC BY 4.0 unless noted.</p>
+    <p class="verline">site <a href="admin/versions.html">v0.1.0</a> · <a href="admin/index.html">engineering</a></p>
+  </div>
+  <div>
+    <h4>The system</h4>
+    <a href="architecture.html">Architecture</a>
+    <a href="rules.html">Rules as data</a>
+    <a href="try-it.html">Try it</a>
+    <a href="roadmap.html">Roadmap</a>
+  </div>
+  <div>
+    <h4>The record</h4>
+    <a href="research.html">The design method</a>
+    <a href="documents/index.html">Documents</a>
+    <a href="code/index.html">The code</a>
+  </div>
+  <div>
+    <h4>Site</h4>
+    <a href="admin/comms.html">Comms</a>
+    <a href="admin/versions.html">Versions</a>
+    <a href="llms.txt">llms.txt</a>
+    <a href="https://sgit.ai">sgit.ai</a>
+    <a href="https://github.com/SGit-AI/SGit-AI__Website__SG_Sentinel">GitHub</a>
+  </div>
+</div></footer>
+
+</body>
+</html>

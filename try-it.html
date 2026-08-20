@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Try it — the sg sentinel CLI across three targets · sg-sentinel.sgit.ai</title>
+<meta name="description" content="Exercise the SG/Sentinel MVP: the sg sentinel CLI (rules, local, logs, blocks, deploy, tui, traffic), fully offline via node or the Docker CF-env simulation, or on live AWS. Every command from the testing manual, verbatim.">
+<link rel="canonical" href="https://sg-sentinel.sgit.ai/try-it.html">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+
+<nav class="site"><div class="row">
+  <a class="brand" href="index.html">sg-sentinel<span>.sgit.ai</span></a>
+  <span class="stage-pill">mvp</span>
+  <a class="ver" href="admin/versions.html" title="Site release history">v0.1.0</a>
+  <a class="nl" href="architecture.html">Architecture</a>
+  <a class="nl" href="rules.html">Rules</a>
+  <a class="nl" href="research.html">Research</a>
+  <a class="nl here" href="try-it.html">Try it</a>
+  <a class="nl" href="roadmap.html">Roadmap</a>
+  <a class="nl" href="documents/index.html">Docs</a>
+  <a class="nl" href="code/index.html">Code</a>
+  <a class="nl" href="admin/comms.html">Comms</a>
+  <a class="gh" href="https://github.com/SGit-AI/SGit-AI__Website__SG_Sentinel">★ GitHub</a>
+</div></nav>
+
+<main class="doc">
+<div class="crumb"><a href="index.html">sg-sentinel.sgit.ai</a> / try it</div>
+<h1>The <code>sg sentinel</code> CLI</h1>
+<p class="lead">Everything below is verbatim from the <a href="documents/testing-manual.html">MVP testing manual</a> — real commands against the real implementation. The offline stack (targets B and C) needs no AWS account at all: the real L1 JS engine plus the real Python L2 actor, writing to a local sink.</p>
+
+<h2 id="surface">The command surface</h2>
+<pre class="shell">sg sentinel rules   list | show &lt;id&gt; | test          <span class="d"># the six tiny-core rules</span>
+sg sentinel local   up [--direct] | status | hit [METHOD] &lt;path&gt; [--ip] [--direct] | down
+                                                     <span class="d"># CF-env sim by default; --direct = node</span>
+sg sentinel logs    ls | tail [-n N] | trace &lt;request-id&gt;      <span class="d"># use case 1 (read the sink)</span>
+sg sentinel blocks  list | why &lt;request-id|ip&gt;                 <span class="d"># use case 2</span>
+sg sentinel deploy  create | destroy &lt;id&gt; | teardown &lt;id&gt;      <span class="d"># live AWS (mutation-gated)</span>
+sg sentinel status                                             <span class="d"># what's deployed</span>
+sg sentinel tui     rules|logs|blocks|status|traffic           <span class="d"># Textual operator screens</span>
+sg sentinel tui     api | chat "&lt;q&gt;" | dashboard               <span class="d"># TUI API + LLM chat (read-only)</span>
+sg sentinel traffic cases | gen | send --url &lt;base&gt;            <span class="d"># use-case corpus + measurement</span>
+sg sentinel echo    serve [--port N]                           <span class="d"># httpget echo origin</span></pre>
+<p>Every command supports <code>--json</code>. Mutating deploy commands take <code>--yes</code> / <code>--dry-run</code>, print the AWS context banner, and require the mutation gate. <code>sn</code> is the short alias.</p>
+
+<h2 id="rules">See the engine without running it</h2>
+<pre class="shell"><span class="d">$</span> sg sentinel rules list                 <span class="d"># table of the 6 MVP rules (id, name, action, MITRE tag)</span>
+<span class="d">$</span> sg sentinel rules show 0012            <span class="d"># one rule's metadata</span>
+<span class="d">$</span> sg sentinel rules test                 <span class="d"># runs the real node L1 engine over the canonical set</span></pre>
+<p><code>rules test</code> drives the actual <code>sentinel_l1.js</code> through Node over the canonical request set and renders the six expected decisions — the same table on the <a href="index.html#proof">front page</a>.</p>
+
+<h2 id="local">Targets B &amp; C — the offline stack</h2>
+<p>The CF-env simulation container (Target C) is the default; add <code>--direct</code> to run the engine via local <code>node</code> (Target B) instead. <code>hit</code> assumes GET unless you give a method; <code>--ip</code> spoofs the source IP.</p>
+<pre class="shell"><span class="d">$</span> sg sentinel local status               <span class="d"># what's ready: node / docker / container / sink + counts</span>
+<span class="d">$</span> sg sentinel local up                   <span class="d"># start the CF-env sim container (default)</span>
+
+<span class="d"># use case 2 — blocking (obvious-bad)</span>
+<span class="d">$</span> sg sentinel local hit /etc/passwd     --ip 185.10.10.10   <span class="d">#</span> <span class="r">block</span><span class="d">, rule 0012, HTTP 403</span>
+<span class="d">$</span> sg sentinel local hit /wp-login.php   --ip 91.20.20.20    <span class="d">#</span> <span class="r">block</span><span class="d">, rule 0018, HTTP 404</span>
+<span class="d">$</span> sg sentinel local hit /.env           --ip 77.30.30.30    <span class="d">#</span> <span class="r">block</span><span class="d">, rule 0014, HTTP 404</span>
+<span class="d">$</span> sg sentinel local hit /index.html     --ip 10.0.0.6       <span class="d">#</span> <span class="r">block</span><span class="d">, rule 0003 (banned ip)</span>
+<span class="d">$</span> sg sentinel local hit GET /index.html --ip 198.51.100.2   <span class="d">#</span> <span class="g">allow</span><span class="d">, rule 0001</span>
+
+<span class="d"># use case 1 — read the sink</span>
+<span class="d">$</span> sg sentinel logs ls
+<span class="d">$</span> sg sentinel logs tail -n 5
+<span class="d">$</span> sg sentinel logs trace &lt;request-id&gt;
+<span class="d">$</span> sg sentinel blocks list                <span class="d"># blocked requests + reason</span>
+<span class="d">$</span> sg sentinel blocks why 185.10.10.10    <span class="d"># raw IP works — matches the hashed store</span>
+
+<span class="d">$</span> sg sentinel local down                 <span class="d"># stop the container + clear the sink (--keep-logs to keep)</span></pre>
+<p>Because the CF-env sim is a real HTTP listener, you can also curl it directly — it runs L1 over the actual request and returns the signal:</p>
+<pre class="shell"><span class="d">$</span> curl -s http://127.0.0.1:8599/etc/passwd
+{<span class="g">"verdict"</span>:<span class="r">"block"</span>,<span class="g">"rule_id"</span>:<span class="g">"0012"</span>,…}
+<span class="d">$</span> curl -s -H <span class="g">'X-Forwarded-For: 10.0.0.6'</span> http://127.0.0.1:8599/   <span class="d">#</span> <span class="r">block</span><span class="d">, rule 0003 (banned ip)</span></pre>
+<p>Notes from the manual: source IPs are hashed in the stored record by default (privacy mode) — <code>blocks why</code> understands both the raw IP and its hashed form. <code>--direct</code> needs <code>node</code> on PATH; the default needs a running Docker daemon. <code>SG_SENTINEL__LOCAL_SINK_DIR</code> overrides the sink location.</p>
+
+<h2 id="aws">Target A — live AWS (ephemeral CloudFront + Lambda@Edge)</h2>
+<div class="warnbox"><b>Mutation-gated, and honestly labelled.</b> This path creates real AWS resources and costs money — and it is the leg of the MVP that is code-complete and unit-tested via in-memory doubles but <b>has not yet been run against a real CloudFront distribution</b>. The commands below are the intended, implemented flow; the first live run is an open item on <a href="admin/comms.html">comms</a>.</div>
+<pre class="shell"><span class="d">$</span> export SG_AWS__SENTINEL__ALLOW_MUTATIONS=1            <span class="d"># required for create/destroy/teardown</span>
+<span class="d">$</span> eval $(sg aws credentials switch &lt;role&gt;)              <span class="d"># real creds in this shell</span>
+
+<span class="d">$</span> sg sentinel deploy create --dry-run --region us-east-1   <span class="d"># preview first (no AWS calls)</span>
+<span class="d">$</span> sg sentinel deploy create --region us-east-1 --yes       <span class="d"># S3 + CF Function (L1) + L@E (L2), TTL 0</span>
+<span class="d">$</span> sg sentinel status
+
+<span class="d"># the distribution takes ~15 min to deploy globally; then:</span>
+<span class="d">$</span> curl -sI https://&lt;dXXXX&gt;.cloudfront.net/etc/passwd    <span class="d">#</span> <span class="r">HTTP/2 403</span>
+<span class="d">$</span> curl -sI https://&lt;dXXXX&gt;.cloudfront.net/.env          <span class="d">#</span> <span class="r">HTTP/2 404</span>
+<span class="d">$</span> curl -sI https://&lt;dXXXX&gt;.cloudfront.net/index.html    <span class="d">#</span> <span class="g">200 / origin</span>
+
+<span class="d">$</span> sg aws s3 ls s3://&lt;log-bucket&gt;/sentinel/              <span class="d"># same sink layout as local</span>
+<span class="d">$</span> sg sentinel deploy teardown &lt;distribution-id&gt; --bucket &lt;log-bucket&gt; --yes   <span class="d"># no orphans</span></pre>
+
+<h2 id="tests">The automated test suite</h2>
+<pre class="shell"><span class="d">$</span> python -m pytest tests/unit/sgraph_ai_service_playwright__cli/sentinel/ -q -rs
+<span class="d"># everything (local-direct + in-memory AWS lifecycle); docker/live legs skip cleanly</span>
+
+<span class="d">$</span> python -m pytest tests/unit/sgraph_ai_service_playwright__cli/sentinel/parity/ -q -rs
+<span class="d"># the three-target parity matrix (local-direct baseline always runs)</span></pre>
+<div class="tablewrap"><table>
+  <thead><tr><th>Opt-in leg</th><th>Enable with</th></tr></thead>
+  <tbody>
+    <tr><td>B↔C docker parity</td><td>a running docker daemon</td></tr>
+    <tr><td>AWS parity</td><td><code>SG_SENTINEL__LIVE_TESTS=1</code> + <code>SENTINEL_TEST_DISTRIBUTION=&lt;cf-domain&gt;</code></td></tr>
+    <tr><td>Live smoke (deploy→curl→teardown)</td><td><code>SG_SENTINEL__LIVE_TESTS=1</code> + <code>SG_AWS__SENTINEL__ALLOW_MUTATIONS=1</code></td></tr>
+  </tbody>
+</table></div>
+
+<h2 id="tui">Operator TUIs and the read-only chat</h2>
+<p>The MVP grew past the CLI: Textual operator screens over the same data, each with <code>--json</code> and a plain-text no-TTY fallback, plus a structured TUI API and a read-only LLM chat grounded in live state.</p>
+<pre class="shell"><span class="d">$</span> sg sentinel tui rules        <span class="d"># the 6 rules; enter → detail (schema in/out)</span>
+<span class="d">$</span> sg sentinel tui logs         <span class="d"># records in the sink; enter → trace by request id</span>
+<span class="d">$</span> sg sentinel tui blocks       <span class="d"># blocks grouped by reason/rule + action breakdown</span>
+<span class="d">$</span> sg sentinel tui status       <span class="d"># reality + the EXACT materialised L1 engine code</span>
+<span class="d">$</span> sg sentinel tui traffic      <span class="d"># press g: replay the corpus through L1+L2 → accuracy + latency</span>
+
+<span class="d">$</span> sg sentinel tui api list                              <span class="d"># the read actions (no LLM, no AWS)</span>
+<span class="d">$</span> sg sentinel tui api invoke sg-sentinel blocks_why --params <span class="g">'{"needle":"185.10.10.10"}'</span>
+
+<span class="d">$</span> sg sentinel tui chat <span class="g">"why was 185.10.10.10 blocked?"</span>  <span class="d"># Bedrock Nova micro; needs AWS creds</span>
+<span class="d">$</span> sg sentinel tui dashboard                             <span class="d"># all surfaces + one shared chat session</span></pre>
+<p>How the chat stays honest: it can only call the read actions, so answers are grounded in the real sink, rules and engine — and it changes nothing. Each answer shows the tool calls used and the model cost. Mutating actions are deliberately not exposed to chat.</p>
+
+<h2 id="traffic">Measuring the impact: traffic generator + echo origin</h2>
+<pre class="shell"><span class="d">$</span> sg sentinel traffic cases                 <span class="d"># the labelled corpus: benign + malicious + malformed</span>
+<span class="d">$</span> sg sentinel traffic gen                   <span class="d"># through the real L1+L2 → accuracy 100%, 10/10 malicious blocked</span>
+
+<span class="d">$</span> sg sentinel echo serve --port 8080 &amp;      <span class="d"># the httpget origin (GET /__hits = what reached it)</span>
+<span class="d">$</span> sg sentinel traffic send --url http://127.0.0.1:8080   <span class="d"># BARE origin → 0/10 malicious blocked</span>
+<span class="d">$</span> curl -s http://127.0.0.1:8080/__hits      <span class="d"># confirm /etc/passwd, /.env … reached the bare origin</span></pre>
+<p>The contrast between a Sentinel-fronted target (malicious blocked, only good traffic reaches origin) and the bare origin (everything reaches it) <em>is</em> the impact measurement. Note the manual's own caveat: <code>gen</code> latency is harness cost, not CloudFront runtime — real edge latency needs <code>send</code> against a live distribution.</p>
+
+<div class="pagenav">
+  <a href="research.html">← The design method</a>
+  <a href="roadmap.html">Roadmap →</a>
+</div>
+</main>
+
+<footer class="site"><div class="cols">
+  <div>
+    <div class="brandline">sg-sentinel<span>.sgit.ai</span></div>
+    <p>SG/Sentinel — an app-coupled edge security and logging layer: L1 decides and signals, L2 acts and writes, L3 (deferred) thinks. All content CC BY 4.0 unless noted.</p>
+    <p class="verline">site <a href="admin/versions.html">v0.1.0</a> · <a href="admin/index.html">engineering</a></p>
+  </div>
+  <div>
+    <h4>The system</h4>
+    <a href="architecture.html">Architecture</a>
+    <a href="rules.html">Rules as data</a>
+    <a href="try-it.html">Try it</a>
+    <a href="roadmap.html">Roadmap</a>
+  </div>
+  <div>
+    <h4>The record</h4>
+    <a href="research.html">The design method</a>
+    <a href="documents/index.html">Documents</a>
+    <a href="code/index.html">The code</a>
+  </div>
+  <div>
+    <h4>Site</h4>
+    <a href="admin/comms.html">Comms</a>
+    <a href="admin/versions.html">Versions</a>
+    <a href="llms.txt">llms.txt</a>
+    <a href="https://sgit.ai">sgit.ai</a>
+    <a href="https://github.com/SGit-AI/SGit-AI__Website__SG_Sentinel">GitHub</a>
+  </div>
+</div></footer>
+
+</body>
+</html>

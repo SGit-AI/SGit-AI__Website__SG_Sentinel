@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Release history · sg-sentinel.sgit.ai</title>
+<meta name="description" content="Site release history for sg-sentinel.sgit.ai. Every push to dev is a release, validated then auto-tagged by CI.">
+<link rel="canonical" href="https://sg-sentinel.sgit.ai/admin/versions.html">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+
+<nav class="site"><div class="row">
+  <a class="brand" href="../index.html">sg-sentinel<span>.sgit.ai</span></a>
+  <span class="stage-pill">mvp</span>
+  <a class="ver" href="versions.html" title="Site release history">v0.1.0</a>
+  <a class="nl" href="../architecture.html">Architecture</a>
+  <a class="nl" href="../rules.html">Rules</a>
+  <a class="nl" href="../research.html">Research</a>
+  <a class="nl" href="../try-it.html">Try it</a>
+  <a class="nl" href="../roadmap.html">Roadmap</a>
+  <a class="nl" href="../documents/index.html">Docs</a>
+  <a class="nl" href="../code/index.html">Code</a>
+  <a class="nl" href="comms.html">Comms</a>
+  <a class="gh" href="https://github.com/SGit-AI/SGit-AI__Website__SG_Sentinel">★ GitHub</a>
+</div></nav>
+
+<main class="doc">
+<div class="crumb"><a href="../index.html">sg-sentinel.sgit.ai</a> / admin / versions</div>
+<h1>Release history</h1>
+<p class="lead">Every push to <code>dev</code> is a release: CI validates the site, verifies the version bump, tags the commit <code>v{release}.{major}.{minor}</code>, and deploys to GitHub Pages. The version is owned by <code>admin/build/version.txt</code> and must agree with the release commit's subject. Same pipeline as <a href="https://github.com/SGit-AI/SGit-AI__Website">SGit-AI__Website</a> and <a href="https://nhi.sgit.ai/admin/versions.html">nhi.sgit.ai</a>.</p>
+
+<div class="tablewrap"><table class="vers">
+  <thead><tr><th>Version</th><th>Date</th><th>What shipped</th></tr></thead>
+  <tbody>
+    <tr>
+      <td class="vnum">v0.1.0</td>
+      <td>20 Aug 2026</td>
+      <td>First MVP of the site, built from the <code>sg-sentinel-website-packet</code> (v0.27.61, 23 May 2026). The six narrative pages — front page with the hand-built L1→signal→L2 SVG, architecture (the layer correction, the signal spine, the three targets, the parity matrix), rules (the tiny core's six rules verbatim with their ATT&amp;CK tags, and the fractal-graph direction), research (the 68-day method, the two tabletop simulations and their 25 gaps told as stories, the prior-art positioning), try-it (every <code>sg sentinel</code> command from the testing manual), and the roadmap (built vs code-complete vs deferred, with the live-AWS caveat stated precisely). The complete 23-document corpus captured verbatim under <code>briefs/</code> with a generated reader page per document (summary, key concepts, key ideas, in-page markdown rendering — <code>admin/build/gen_documents.py</code>). The 115-file <code>sentinel/</code> code snapshot under <code>code/</code> with a reading guide. NFRs: the validate gate (version agreement, internal links, key/credential-leak tripwire), the validate→tag→deploy CI pipeline adapted from SGit-AI__Website, versions/comms/engineering admin pages, <code>llms.txt</code>, <code>index.md</code>, sitemap, robots, CNAME for <code>sg-sentinel.sgit.ai</code>.</td>
+    </tr>
+  </tbody>
+</table></div>
+
+<div class="pagenav">
+  <a href="comms.html">← Comms</a>
+  <a href="index.html">How this site is built →</a>
+</div>
+</main>
+
+<footer class="site"><div class="cols">
+  <div>
+    <div class="brandline">sg-sentinel<span>.sgit.ai</span></div>
+    <p>SG/Sentinel — an app-coupled edge security and logging layer: L1 decides and signals, L2 acts and writes, L3 (deferred) thinks. All content CC BY 4.0 unless noted.</p>
+    <p class="verline">site <a href="versions.html">v0.1.0</a> · <a href="index.html">engineering</a></p>
+  </div>
+  <div>
+    <h4>The system</h4>
+    <a href="../architecture.html">Architecture</a>
+    <a href="../rules.html">Rules as data</a>
+    <a href="../try-it.html">Try it</a>
+    <a href="../roadmap.html">Roadmap</a>
+  </div>
+  <div>
+    <h4>The record</h4>
+    <a href="../research.html">The design method</a>
+    <a href="../documents/index.html">Documents</a>
+    <a href="../code/index.html">The code</a>
+  </div>
+  <div>
+    <h4>Site</h4>
+    <a href="comms.html">Comms</a>
+    <a href="versions.html">Versions</a>
+    <a href="../llms.txt">llms.txt</a>
+    <a href="https://sgit.ai">sgit.ai</a>
+    <a href="https://github.com/SGit-AI/SGit-AI__Website__SG_Sentinel">GitHub</a>
+  </div>
+</div></footer>
+
+</body>
+</html>

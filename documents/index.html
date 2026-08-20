@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The documents — all 23 packet documents, readable here · sg-sentinel.sgit.ai</title>
+<meta name="description" content="The complete SG/Sentinel document corpus, captured verbatim and readable in-page: the 19-brief design series, the two implementation briefs, the testing manual, and the website brief itself — each with a summary, key concepts and ideas, and the full markdown.">
+<link rel="canonical" href="https://sg-sentinel.sgit.ai/documents/index.html">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+
+<nav class="site"><div class="row">
+  <a class="brand" href="../index.html">sg-sentinel<span>.sgit.ai</span></a>
+  <span class="stage-pill">mvp</span>
+  <a class="ver" href="../admin/versions.html" title="Site release history">v0.1.0</a>
+  <a class="nl" href="../architecture.html">Architecture</a>
+  <a class="nl" href="../rules.html">Rules</a>
+  <a class="nl" href="../research.html">Research</a>
+  <a class="nl" href="../try-it.html">Try it</a>
+  <a class="nl" href="../roadmap.html">Roadmap</a>
+  <a class="nl here" href="index.html">Docs</a>
+  <a class="nl" href="../code/index.html">Code</a>
+  <a class="nl" href="../admin/comms.html">Comms</a>
+  <a class="gh" href="https://github.com/SGit-AI/SGit-AI__Website__SG_Sentinel">★ GitHub</a>
+</div></nav>
+
+<main class="doc">
+<div class="crumb"><a href="../index.html">sg-sentinel.sgit.ai</a> / documents</div>
+<h1>The documents</h1>
+<p class="lead">The complete corpus behind SG/Sentinel — ~57,000 words — captured verbatim under <code>briefs/</code> and readable here. Each page carries the same apparatus: a summary, the key concepts (linked to where they live on this site), the key ideas, and then the full document rendered in-page from the raw markdown. The raw file stays the source of truth; the page is presentation. Every claim on this site traces to one of these documents.</p>
+
+<h2 id="start">Start here</h2>
+<div class="tablewrap"><table>
+  <thead><tr><th>Document</th><th>Type · date</th><th>In one line</th></tr></thead>
+  <tbody>
+    <tr><td><a href="mvp-architecture.html"><b>The MVP implementation architecture</b></a></td><td>Arch brief · v0.27.59 · 23 May 2026</td><td>The shortest path to the system: L1 decides + signals, L2 acts + writes, the signal spine, three targets, the parity matrix.</td></tr>
+    <tr><td><a href="mvp-implementation.html"><b>The file-by-file dev brief</b></a></td><td>Dev brief · v0.27.60 · 23 May 2026</td><td>Exact schemas, six build phases, the parity test, and the Lambda@Edge gotchas.</td></tr>
+    <tr><td><a href="testing-manual.html"><b>The testing manual</b></a></td><td>Repo doc · 23 May 2026</td><td>Every <code>sg sentinel</code> command across all three targets — plus the TUIs, the read-only chat, and the traffic tooling.</td></tr>
+  </tbody>
+</table></div>
+
+<h2 id="series">The design series — day 68 (v0.27.58, 18 May 2026)</h2>
+<div class="tablewrap"><table>
+  <thead><tr><th>Document</th><th>Type</th><th>In one line</th></tr></thead>
+  <tbody>
+    <tr><td><a href="principles.html"><b>Edge security &amp; logging layer principles</b></a></td><td>Arch brief</td><td>The founding problems (visibility, Firehose cost, WAF rent) and the principles: substrate-independent, owned, hostile to bad traffic.</td></tr>
+    <tr><td><a href="execution-model.html"><b>The execution model: layered responders</b></a></td><td>Arch brief</td><td>CloudFront Functions vs Lambda@Edge, the three responders, no-invalid-request, "not everything has to be online".</td></tr>
+    <tr><td><a href="edge-mvp.html"><b>The edge layer MVP</b></a></td><td>Dev brief</td><td>Visibility, blocking, deployment — and the app-coupled WAF insight that names the differentiator.</td></tr>
+    <tr><td><a href="rules-engine.html"><b>The rules engine where rules are everything</b></a></td><td>Arch brief</td><td>Rules are the engine; the tiny high-privilege core; LLMs author rules but never run inline.</td></tr>
+    <tr><td><a href="interactivity.html"><b>Interactivity &amp; deployment phases</b></a></td><td>Arch brief</td><td>Not a spectator sport: every layer invocable, local-everywhere, dangerous dev-only rules, dev/main/prod.</td></tr>
+    <tr><td><a href="codebase-extension.html"><b>Sentinel as codebase extension</b></a></td><td>Arch brief</td><td>Security as part of the code: Type_Safe validation at the trust boundary, agentic development.</td></tr>
+    <tr><td><a href="delegation.html"><b>Delegation &amp; choke-points</b></a></td><td>Arch brief</td><td>Checks concentrate at choke-points; apps delegate to Sentinel; any QA-vs-prod difference is a major bug.</td></tr>
+    <tr><td><a href="time-dimension.html"><b>Time as a first-class dimension</b></a></td><td>Arch brief</td><td>Make good users faster; detect before damage, not instantly; damage prevented as the success metric.</td></tr>
+    <tr><td><a href="developer-friendliness.html"><b>Developer-friendliness &amp; the evidence graph</b></a></td><td>Arch brief</td><td>Developer-friendliness as a quality multiplier; "what do you know about me?"; vault-per-user with anonymity modes.</td></tr>
+    <tr><td><a href="research-standards.html"><b>Learning from standards &amp; services</b></a></td><td>Research brief</td><td>ATT&amp;CK, CRS/Coraza, STIX/TAXII, the threat-intel landscape — and IP reputation demoted to context.</td></tr>
+    <tr><td><a href="compliance.html"><b>Compliance as a living graph</b></a></td><td>Arch / strategy brief</td><td>Compliance computed from what is actually deployed, per rule-set, validatable — not a checkbox.</td></tr>
+    <tr><td><a href="rule-architecture.html"><b>Rule architecture strategy: the fractal graph</b></a></td><td>Arch / research brief</td><td>Rules as a fractal graph with rich metadata; the deterministic-to-opinion spectrum; CRS patterns reused.</td></tr>
+    <tr><td><a href="architecture-flows.html"><b>Architecture &amp; data flows</b></a></td><td>Arch brief</td><td>The component map and both use cases end to end; Sentinel's logging job ends at S3.</td></tr>
+    <tr><td><a href="tui-mockups.html"><b>The TUI mockups</b></a></td><td>Dev brief</td><td>Nine operator surfaces as ASCII acceptance criteria, chatbot-friendly by construction.</td></tr>
+    <tr><td><a href="behavioural-spec.html"><b>Rules of the game: the behavioural spec</b></a></td><td>Arch brief</td><td>The system's behaviour in plain English — the answer key the tabletop runs against.</td></tr>
+    <tr><td><a href="tabletop-1.html"><b>Tabletop simulation 1: generic flows &amp; logging</b></a></td><td>Tabletop</td><td>Five benign flows traced on paper; 11 gaps, including fingerprint storage and symmetry-blocks-deploys.</td></tr>
+    <tr><td><a href="tabletop-2.html"><b>Tabletop simulation 2: blocking</b></a></td><td>Tabletop</td><td>Six attack flows; 14 gaps, 7 major — fast-track redesigned, per-IP dethroned, the honest limit stated.</td></tr>
+    <tr><td><a href="addendum.html"><b>The consolidated addendum</b></a></td><td>Addendum</td><td>Prior art positioned, five cross-cutting observations, and every tabletop gap resolved — the bridge to the build.</td></tr>
+    <tr><td><a href="planning.html"><b>Future research &amp; the path to MVP</b></a></td><td>Planning brief</td><td>"We have enough to build": the memos to record, the deep-dives to run, the parked list, the MVP boundary.</td></tr>
+  </tbody>
+</table></div>
+
+<h2 id="site-brief">The site's own provenance</h2>
+<div class="tablewrap"><table>
+  <thead><tr><th>Document</th><th>Type · date</th><th>In one line</th></tr></thead>
+  <tbody>
+    <tr><td><a href="website-brief.html"><b>Brief: build the SG/Sentinel website</b></a></td><td>Website brief · v0.27.61 · 23 May 2026</td><td>The brief this site was built from — narrative spine, content rules, definition of done.</td></tr>
+  </tbody>
+</table></div>
+
+<div class="note"><b>Adding a document</b> is one entry in <code>admin/build/gen_documents.py</code> plus the raw markdown in <code>briefs/</code> — the generator produces the reader page, and the validate gate checks the links. The <a href="../admin/index.html">engineering page</a> describes the pipeline.</div>
+
+<div class="pagenav">
+  <a href="../research.html">← The design method</a>
+  <a href="mvp-architecture.html">First document →</a>
+</div>
+</main>
+
+<footer class="site"><div class="cols">
+  <div>
+    <div class="brandline">sg-sentinel<span>.sgit.ai</span></div>
+    <p>SG/Sentinel — an app-coupled edge security and logging layer: L1 decides and signals, L2 acts and writes, L3 (deferred) thinks. All content CC BY 4.0 unless noted.</p>
+    <p class="verline">site <a href="../admin/versions.html">v0.1.0</a> · <a href="../admin/index.html">engineering</a></p>
+  </div>
+  <div>
+    <h4>The system</h4>
+    <a href="../architecture.html">Architecture</a>
+    <a href="../rules.html">Rules as data</a>
+    <a href="../try-it.html">Try it</a>
+    <a href="../roadmap.html">Roadmap</a>
+  </div>
+  <div>
+    <h4>The record</h4>
+    <a href="../research.html">The design method</a>
+    <a href="index.html">Documents</a>
+    <a href="../code/index.html">The code</a>
+  </div>
+  <div>
+    <h4>Site</h4>
+    <a href="../admin/comms.html">Comms</a>
+    <a href="../admin/versions.html">Versions</a>
+    <a href="../llms.txt">llms.txt</a>
+    <a href="https://sgit.ai">sgit.ai</a>
+    <a href="https://github.com/SGit-AI/SGit-AI__Website__SG_Sentinel">GitHub</a>
+  </div>
+</div></footer>
+
+</body>
+</html>
